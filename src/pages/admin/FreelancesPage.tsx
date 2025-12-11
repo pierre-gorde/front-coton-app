@@ -1,5 +1,5 @@
-import { PlaceholderPage } from '@/components/common/PlaceholderPage';
+import { UnderConstruction } from '@/components/common/UnderConstruction';
 
 export default function FreelancesPage() {
-  return <PlaceholderPage title="La liste des freelances" />;
+  return <UnderConstruction feature="La liste des freelances" />;
 }

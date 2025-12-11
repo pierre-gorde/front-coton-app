@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { PlaceholderPage } from '@/components/common/PlaceholderPage';
+import { UnderConstruction } from '@/components/common/UnderConstruction';
 
 export default function CheckDetailPage() {
   const { checkId } = useParams();
   
-  return <PlaceholderPage title={`Le détail du poste (${checkId})`} />;
+  return <UnderConstruction feature={`Le détail du poste (${checkId})`} />;
 }

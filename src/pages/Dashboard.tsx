@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardStats } from '@/lib/api/mockClient';
 import type { DashboardStats } from '@/lib/types';
@@ -98,9 +99,9 @@ export default function DashboardPage() {
             <CardTitle className="text-lg">Actions rapides</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <a
-              href="/dashboard/admin/check"
-              className="flex items-center gap-3 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+            <Link
+              to="/dashboard/admin/check"
+              className="flex items-center gap-3 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
             >
               <div className="h-10 w-10 rounded-lg gradient-accent flex items-center justify-center">
                 <Briefcase className="h-5 w-5 text-accent-foreground" />
@@ -109,10 +110,10 @@ export default function DashboardPage() {
                 <p className="font-medium text-foreground">COTON Check</p>
                 <p className="text-sm text-muted-foreground">Gérer les postes et candidatures</p>
               </div>
-            </a>
-            <a
-              href="/dashboard/admin/clients"
-              className="flex items-center gap-3 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+            </Link>
+            <Link
+              to="/dashboard/admin/clients"
+              className="flex items-center gap-3 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
             >
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Building2 className="h-5 w-5 text-primary" />
@@ -121,7 +122,7 @@ export default function DashboardPage() {
                 <p className="font-medium text-foreground">Clients</p>
                 <p className="text-sm text-muted-foreground">Voir tous les clients</p>
               </div>
-            </a>
+            </Link>
           </CardContent>
         </Card>
 

@@ -1,5 +1,5 @@
-import { PlaceholderPage } from '@/components/common/PlaceholderPage';
+import { UnderConstruction } from '@/components/common/UnderConstruction';
 
 export default function SettingsPage() {
-  return <PlaceholderPage title="Les paramètres" />;
+  return <UnderConstruction feature="Les paramètres" />;
 }
