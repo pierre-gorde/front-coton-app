@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
@@ -60,13 +61,15 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="rounded border-input" />
-                  <span className="text-muted-foreground">Se souvenir de moi</span>
-                </label>
-                <a href="#" className="text-sm text-accent hover:underline">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="remember" />
+                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                    Se souvenir de moi
+                  </Label>
+                </div>
+                <Link to="#" className="text-sm text-accent hover:underline">
                   Mot de passe oublié ?
-                </a>
+                </Link>
               </div>
               <Link to="/dashboard">
                 <Button className="w-full h-11 gradient-accent text-accent-foreground font-medium">
@@ -79,9 +82,9 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-muted-foreground">
             Pas encore de compte ?{' '}
-            <a href="#" className="text-accent hover:underline font-medium">
+            <Link to="#" className="text-accent hover:underline font-medium">
               Contactez l'administrateur
-            </a>
+            </Link>
           </p>
         </div>
       </div>
