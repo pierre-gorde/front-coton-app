@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockCheckAdminApi } from '@/lib/api/mockClient';
-import type { CheckMission, CheckMissionStatus, Client } from '@/lib/types';
+import { listCheckMissions, type CheckMissionWithClient } from '@/lib/services/checkAdminService';
+import type { CheckMissionStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,10 @@ import {
   Filter,
   Building2,
   Users,
+  Calendar,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -37,26 +40,20 @@ const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'defaul
 
 export default function CheckListPage() {
   const navigate = useNavigate();
-  const [missions, setMissions] = useState<CheckMission[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [missions, setMissions] = useState<CheckMissionWithClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    Promise.all([mockCheckAdminApi.listCheckMissions(), mockCheckAdminApi.listClients()]).then(([missionsData, clientsData]) => {
-      setMissions(missionsData);
-      setClients(clientsData);
+    listCheckMissions().then((data) => {
+      setMissions(data);
       setLoading(false);
     });
   }, []);
 
-  const getClientName = (clientId: string) => {
-    return clients.find(c => c.id === clientId)?.name || '-';
-  };
-
   const filteredMissions = missions.filter(mission => {
-    const clientName = getClientName(mission.clientId);
+    const clientName = mission.client?.name || '';
     const matchesSearch = mission.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       mission.reference.toLowerCase().includes(searchQuery.toLowerCase());
@@ -66,6 +63,10 @@ export default function CheckListPage() {
 
   const handleRowClick = (missionId: string) => {
     navigate(`/dashboard/admin/check/${missionId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'dd MMM yyyy', { locale: fr });
   };
 
   return (
@@ -85,8 +86,8 @@ export default function CheckListPage() {
       </div>
 
       {/* Filters */}
-      <Card className="shadow-card">
-        <CardContent className="py-4">
+      <Card className="rounded-xl shadow-sm">
+        <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -114,13 +115,13 @@ export default function CheckListPage() {
       </Card>
 
       {/* Table */}
-      <Card className="shadow-card">
-        <CardHeader className="pb-0">
+      <Card className="rounded-xl shadow-sm">
+        <CardHeader className="p-6 pb-0">
           <CardTitle className="text-lg">
             Postes ({filteredMissions.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="p-6 pt-4">
           {loading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -141,13 +142,14 @@ export default function CheckListPage() {
                     <TableHead className="font-semibold">Client</TableHead>
                     <TableHead className="font-semibold text-center">Candidats</TableHead>
                     <TableHead className="font-semibold">Statut</TableHead>
+                    <TableHead className="font-semibold">Mis à jour</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredMissions.map((mission) => (
                     <TableRow 
                       key={mission.id} 
-                      className="hover:bg-muted/30 cursor-pointer"
+                      className="hover:bg-muted/30 cursor-pointer transition-colors"
                       onClick={() => handleRowClick(mission.id)}
                     >
                       <TableCell>
@@ -162,8 +164,8 @@ export default function CheckListPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <Building2 className="h-4 w-4" />
-                          <span>{getClientName(mission.clientId)}</span>
+                          <Building2 className="h-4 w-4 shrink-0" />
+                          <span>{mission.client?.name || '-'}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -176,6 +178,12 @@ export default function CheckListPage() {
                         <Badge variant={statusConfig[mission.status].variant}>
                           {statusConfig[mission.status].label}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4 shrink-0" />
+                          <span>{formatDate(mission.updatedAt)}</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
