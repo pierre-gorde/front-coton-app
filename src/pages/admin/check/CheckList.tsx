@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMissions } from '@/lib/api/mockClient';
-import type { CheckMission, MissionStatus } from '@/lib/types';
+import { getMissions, getClients } from '@/lib/api/mockClient';
+import type { CheckMission, CheckMissionStatus, Client } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,47 +26,43 @@ import {
   Search,
   Filter,
   Building2,
-  MapPin,
   Users,
 } from 'lucide-react';
 
-const statusConfig: Record<MissionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
-  ACTIVE: { label: 'Active', variant: 'default' },
-  PAUSED: { label: 'En pause', variant: 'outline' },
-  CLOSED: { label: 'Fermée', variant: 'destructive' },
-  ARCHIVED: { label: 'Archivée', variant: 'secondary' },
+  OPEN: { label: 'Ouvert', variant: 'default' },
+  CLOSED: { label: 'Fermé', variant: 'destructive' },
 };
 
 export default function CheckListPage() {
   const navigate = useNavigate();
   const [missions, setMissions] = useState<CheckMission[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    getMissions().then(data => {
-      setMissions(data);
+    Promise.all([getMissions(), getClients()]).then(([missionsData, clientsData]) => {
+      setMissions(missionsData);
+      setClients(clientsData);
       setLoading(false);
     });
   }, []);
 
+  const getClientName = (clientId: string) => {
+    return clients.find(c => c.id === clientId)?.name || '-';
+  };
+
   const filteredMissions = missions.filter(mission => {
+    const clientName = getClientName(mission.clientId);
     const matchesSearch = mission.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mission.client?.name.toLowerCase().includes(searchQuery.toLowerCase());
+      clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mission.reference.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || mission.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
-  const formatSalary = (mission: CheckMission) => {
-    if (!mission.salary) return '-';
-    const { min, max, currency } = mission.salary;
-    if (mission.contractType === 'FREELANCE') {
-      return `${min}-${max} ${currency}/jour`;
-    }
-    return `${(min / 1000).toFixed(0)}k-${(max / 1000).toFixed(0)}k ${currency}`;
-  };
 
   const handleRowClick = (missionId: string) => {
     navigate(`/dashboard/admin/check/${missionId}`);
@@ -95,7 +91,7 @@ export default function CheckListPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par titre ou client..."
+                placeholder="Rechercher par titre, client ou référence..."
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -140,11 +136,9 @@ export default function CheckListPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">Référence</TableHead>
                     <TableHead className="font-semibold">Poste</TableHead>
                     <TableHead className="font-semibold">Client</TableHead>
-                    <TableHead className="font-semibold">Localisation</TableHead>
-                    <TableHead className="font-semibold">Contrat</TableHead>
-                    <TableHead className="font-semibold">Salaire</TableHead>
                     <TableHead className="font-semibold text-center">Candidats</TableHead>
                     <TableHead className="font-semibold">Statut</TableHead>
                   </TableRow>
@@ -157,6 +151,11 @@ export default function CheckListPage() {
                       onClick={() => handleRowClick(mission.id)}
                     >
                       <TableCell>
+                        <span className="font-mono text-sm text-muted-foreground">
+                          {mission.reference}
+                        </span>
+                      </TableCell>
+                      <TableCell>
                         <span className="font-medium text-foreground">
                           {mission.title}
                         </span>
@@ -164,27 +163,13 @@ export default function CheckListPage() {
                       <TableCell>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Building2 className="h-4 w-4" />
-                          <span>{mission.client?.name || '-'}</span>
+                          <span>{getClientName(mission.clientId)}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{mission.location}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-normal">
-                          {mission.contractType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatSalary(mission)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{mission.candidatesCount}</span>
+                          <span className="font-medium">{mission.candidateIds.length}</span>
                         </div>
                       </TableCell>
                       <TableCell>

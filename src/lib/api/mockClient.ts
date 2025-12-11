@@ -15,9 +15,9 @@ export async function getUserById(id: string): Promise<User | undefined> {
   return mockUsers.find(u => u.id === id);
 }
 
-export async function getUsersByRole(role: User['role']): Promise<User[]> {
+export async function getUsersByRole(role: User['roles'][number]): Promise<User[]> {
   await delay();
-  return mockUsers.filter(u => u.role === role);
+  return mockUsers.filter(u => u.roles.includes(role));
 }
 
 // ============ CLIENTS ============
@@ -34,60 +34,33 @@ export async function getClientById(id: string): Promise<Client | undefined> {
 // ============ MISSIONS ============
 export async function getMissions(): Promise<CheckMission[]> {
   await delay();
-  // Enrich missions with client data
-  return mockMissions.map(mission => ({
-    ...mission,
-    client: mockClients.find(c => c.id === mission.clientId),
-  }));
+  return [...mockMissions];
 }
 
 export async function getMissionById(id: string): Promise<CheckMission | undefined> {
   await delay();
-  const mission = mockMissions.find(m => m.id === id);
-  if (!mission) return undefined;
-  return {
-    ...mission,
-    client: mockClients.find(c => c.id === mission.clientId),
-  };
+  return mockMissions.find(m => m.id === id);
 }
 
 export async function getMissionsByStatus(status: CheckMission['status']): Promise<CheckMission[]> {
   await delay();
-  return mockMissions
-    .filter(m => m.status === status)
-    .map(mission => ({
-      ...mission,
-      client: mockClients.find(c => c.id === mission.clientId),
-    }));
+  return mockMissions.filter(m => m.status === status);
 }
 
 // ============ CANDIDATES ============
 export async function getCandidates(): Promise<Candidate[]> {
   await delay();
-  return mockCandidates.map(candidate => ({
-    ...candidate,
-    user: mockUsers.find(u => u.id === candidate.userId),
-  }));
+  return [...mockCandidates];
 }
 
 export async function getCandidateById(id: string): Promise<Candidate | undefined> {
   await delay();
-  const candidate = mockCandidates.find(c => c.id === id);
-  if (!candidate) return undefined;
-  return {
-    ...candidate,
-    user: mockUsers.find(u => u.id === candidate.userId),
-  };
+  return mockCandidates.find(c => c.id === id);
 }
 
-export async function getCandidatesByMission(missionId: string): Promise<Candidate[]> {
+export async function getCandidatesByMission(checkMissionId: string): Promise<Candidate[]> {
   await delay();
-  return mockCandidates
-    .filter(c => c.missionId === missionId)
-    .map(candidate => ({
-      ...candidate,
-      user: mockUsers.find(u => u.id === candidate.userId),
-    }));
+  return mockCandidates.filter(c => c.checkMissionId === checkMissionId);
 }
 
 // ============ STATS ============
