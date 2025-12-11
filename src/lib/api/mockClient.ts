@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - Mock API Implementation
 // ===========================================
 
-import type { User, Client, CheckMission, Candidate } from '@/lib/types';
+import type { User, Client, CheckMission, Candidate, ScorecardCriterion, CandidateReport, CandidateEvaluationView } from '@/lib/types';
 import type { CheckAdminApi } from './contracts';
 
 // Simulate network delay
@@ -13,11 +13,13 @@ let userIdCounter = 10;
 let clientIdCounter = 10;
 let missionIdCounter = 10;
 let candidateIdCounter = 10;
+let reportIdCounter = 10;
 
 const generateUserId = () => `usr_${String(++userIdCounter).padStart(3, '0')}`;
 const generateClientId = () => `cli_${String(++clientIdCounter).padStart(3, '0')}`;
 const generateMissionId = () => `mis_${String(++missionIdCounter).padStart(3, '0')}`;
 const generateCandidateId = () => `cand_${String(++candidateIdCounter).padStart(3, '0')}`;
+const generateReportId = () => `rep_${String(++reportIdCounter).padStart(3, '0')}`;
 
 // ===========================================
 // IN-MEMORY DATA STORES
@@ -243,6 +245,106 @@ const candidates: Candidate[] = [
   },
 ];
 
+// ----- Scorecard Criteria -----
+
+const scorecardCriteria: ScorecardCriterion[] = [
+  {
+    id: 'crit_001',
+    label: 'Maîtrise React / TypeScript',
+    domainName: 'Frontend',
+    weightPercentage: 30,
+  },
+  {
+    id: 'crit_002',
+    label: 'Architecture & Design Patterns',
+    domainName: 'Architecture',
+    weightPercentage: 25,
+  },
+  {
+    id: 'crit_003',
+    label: 'Qualité du code & Tests',
+    domainName: 'Qualité',
+    weightPercentage: 20,
+  },
+  {
+    id: 'crit_004',
+    label: 'Communication & Clarté',
+    domainName: 'Soft Skills',
+    weightPercentage: 15,
+  },
+  {
+    id: 'crit_005',
+    label: 'Autonomie & Proactivité',
+    domainName: 'Soft Skills',
+    weightPercentage: 10,
+  },
+];
+
+// ----- Candidate Reports -----
+
+const candidateReports: CandidateReport[] = [
+  {
+    id: 'rep_001',
+    candidateId: 'cand_001',
+    authorUserId: 'usr_002',
+    role: 'PRIMARY_REVIEWER',
+    finalScore: 78,
+    summary: 'Emma démontre une solide maîtrise de React et TypeScript. Son code est propre et bien structuré. Elle répond aux attentes techniques du poste avec quelques axes d\'amélioration sur les patterns avancés.',
+    positives: '- Excellente connaissance de React hooks\n- Code lisible et bien documenté\n- Bonne compréhension des principes SOLID',
+    negatives: '- Quelques lacunes sur les design patterns avancés\n- Tests unitaires présents mais couverture perfectible',
+    remarks: 'Candidate prometteuse, recommandée pour un second entretien technique approfondi.',
+    criterionScores: [
+      { criterionId: 'crit_001', score: 85, comment: 'Très bonne maîtrise de React' },
+      { criterionId: 'crit_002', score: 70, comment: 'Connaissance correcte, à approfondir' },
+      { criterionId: 'crit_003', score: 75, comment: 'Tests présents, couverture moyenne' },
+      { criterionId: 'crit_004', score: 80, comment: 'Explications claires' },
+      { criterionId: 'crit_005', score: 78, comment: 'Autonome sur les tâches courantes' },
+    ],
+    createdAt: '2024-01-10T14:30:00Z',
+    updatedAt: '2024-01-10T14:30:00Z',
+  },
+  {
+    id: 'rep_002',
+    candidateId: 'cand_001',
+    authorUserId: 'usr_003',
+    role: 'SECONDARY_REVIEWER',
+    finalScore: 82,
+    summary: 'Évaluation positive. Emma a démontré une capacité à résoudre des problèmes complexes et à communiquer efficacement ses choix techniques.',
+    positives: '- Résolution de problèmes méthodique\n- Bonne gestion du temps\n- Questions pertinentes posées',
+    negatives: '- Expérience limitée sur les architectures micro-frontend\n- Pourrait améliorer la gestion des erreurs',
+    remarks: 'Profil intéressant pour le poste, compatible avec l\'équipe.',
+    criterionScores: [
+      { criterionId: 'crit_001', score: 88, comment: 'Maîtrise confirmée' },
+      { criterionId: 'crit_002', score: 75, comment: 'Bonne base architecturale' },
+      { criterionId: 'crit_003', score: 80, comment: 'Approche qualité solide' },
+      { criterionId: 'crit_004', score: 85, comment: 'Communication fluide' },
+      { criterionId: 'crit_005', score: 82, comment: 'Proactive dans les échanges' },
+    ],
+    createdAt: '2024-01-11T10:00:00Z',
+    updatedAt: '2024-01-11T10:00:00Z',
+  },
+  {
+    id: 'rep_003',
+    candidateId: 'cand_001',
+    authorUserId: 'usr_001',
+    role: 'FINAL',
+    finalScore: 80,
+    summary: 'Synthèse finale : Emma Petit est une candidate solide qui répond aux critères techniques du poste. Les deux reviewers s\'accordent sur ses compétences React/TS et sa capacité de communication. Recommandation positive.',
+    positives: '- Compétences techniques validées par les deux reviewers\n- Soft skills au-dessus de la moyenne\n- Motivation évidente pour le projet',
+    negatives: '- Points d\'amélioration identifiés sur l\'architecture avancée\n- Expérience à consolider sur certains patterns',
+    remarks: 'Avis favorable à l\'embauche. Prévoir un accompagnement sur les sujets architecture les premiers mois.',
+    criterionScores: [
+      { criterionId: 'crit_001', score: 86, comment: 'Moyenne des évaluations' },
+      { criterionId: 'crit_002', score: 72, comment: 'Point d\'attention' },
+      { criterionId: 'crit_003', score: 77, comment: 'Satisfaisant' },
+      { criterionId: 'crit_004', score: 82, comment: 'Point fort' },
+      { criterionId: 'crit_005', score: 80, comment: 'Satisfaisant' },
+    ],
+    createdAt: '2024-01-12T16:00:00Z',
+    updatedAt: '2024-01-12T16:00:00Z',
+  },
+];
+
 // ===========================================
 // MOCK API IMPLEMENTATION
 // ===========================================
@@ -445,9 +547,30 @@ export const mockCheckAdminApi: CheckAdminApi = {
 
   // ----- Candidate Evaluation -----
 
-  async getCandidateEvaluation(): Promise<undefined> {
+  async getCandidateEvaluation(candidateId: string): Promise<CandidateEvaluationView | undefined> {
     await delay();
-    // TODO: implement mock data for candidate evaluation
-    return undefined;
+
+    const candidate = candidates.find(c => c.id === candidateId);
+    if (!candidate) {
+      return undefined;
+    }
+
+    const mission = checkMissions.find(m => m.id === candidate.checkMissionId);
+    if (!mission) {
+      return undefined;
+    }
+
+    const client = clients.find(c => c.id === mission.clientId);
+    const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
+    const reports = candidateReports.filter(r => r.candidateId === candidateId);
+
+    return {
+      candidate,
+      mission,
+      client: client!,
+      reviewers,
+      scorecardCriteria: [...scorecardCriteria],
+      reports,
+    };
   },
 };
