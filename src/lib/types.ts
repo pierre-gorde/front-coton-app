@@ -114,6 +114,7 @@ export interface CandidateReport {
 
 export interface CandidateEvaluationView {
   candidate: Candidate;
+  candidateUser: User;
   mission: CheckMission;
   client: Client;
   reviewers: User[];
