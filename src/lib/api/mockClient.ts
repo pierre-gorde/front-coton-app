@@ -442,4 +442,12 @@ export const mockCheckAdminApi: CheckAdminApi = {
 
     candidates.splice(index, 1);
   },
+
+  // ----- Candidate Evaluation -----
+
+  async getCandidateEvaluation(): Promise<undefined> {
+    await delay();
+    // TODO: implement mock data for candidate evaluation
+    return undefined;
+  },
 };
