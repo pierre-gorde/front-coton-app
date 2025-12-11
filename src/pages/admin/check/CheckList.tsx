@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMissions, getClients } from '@/lib/api/mockClient';
+import { mockCheckAdminApi } from '@/lib/api/mockClient';
 import type { CheckMission, CheckMissionStatus, Client } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export default function CheckListPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    Promise.all([getMissions(), getClients()]).then(([missionsData, clientsData]) => {
+    Promise.all([mockCheckAdminApi.listCheckMissions(), mockCheckAdminApi.listClients()]).then(([missionsData, clientsData]) => {
       setMissions(missionsData);
       setClients(clientsData);
       setLoading(false);
