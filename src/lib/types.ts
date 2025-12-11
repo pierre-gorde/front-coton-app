@@ -80,6 +80,47 @@ export interface Candidate {
   notes?: string;
 }
 
+// ----- Candidate Evaluation Domain -----
+
+export type CandidateReportRole = 'PRIMARY_REVIEWER' | 'SECONDARY_REVIEWER' | 'FINAL';
+
+export interface ScorecardCriterion {
+  id: string;
+  label: string;
+  domainName: string;
+  weightPercentage: number; // 0–100
+}
+
+export interface CriterionScore {
+  criterionId: string;
+  score: number; // 0–100
+  comment?: string;
+}
+
+export interface CandidateReport {
+  id: string;
+  candidateId: string;
+  authorUserId: string;
+  role: CandidateReportRole;
+  finalScore: number; // 0–100, weighted global score
+  summary: string; // paragraph: avis global vs attentes
+  positives: string; // rich text as string
+  negatives: string; // rich text as string
+  remarks: string; // rich text as string
+  criterionScores: CriterionScore[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CandidateEvaluationView {
+  candidate: Candidate;
+  mission: CheckMission;
+  client: Client;
+  reviewers: User[];
+  scorecardCriteria: ScorecardCriterion[];
+  reports: CandidateReport[];
+}
+
 // ----- Dashboard Stats -----
 
 export interface DashboardStats {

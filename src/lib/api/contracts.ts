@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - API Contracts
 // ===========================================
 
-import type { Client, CheckMission, User, Candidate } from '@/lib/types';
+import type { Client, CheckMission, User, Candidate, CandidateEvaluationView } from '@/lib/types';
 
 /**
  * API contract interface for COTON Check > ADMIN domain.
@@ -63,7 +63,11 @@ export interface CheckAdminApi {
   updateCandidate(
     id: string,
     input: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>>
-  ): Promise<Candidate>
+  ): Promise<Candidate>;
+
+  // ----- Candidate Evaluation -----
+
+  getCandidateEvaluation(candidateId: string): Promise<CandidateEvaluationView | undefined>
 
   deleteCandidate(id: string): Promise<void>;
 }
