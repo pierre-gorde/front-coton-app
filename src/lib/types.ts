@@ -1,76 +1,55 @@
-// User roles
-export type UserRole = 'ADMIN' | 'FREELANCE' | 'CANDIDAT' | 'CLIENT';
+// ===========================================
+// COTON Dashboard - Core Types
+// ===========================================
 
-// User type
+// ----- User Domain -----
+
+export type UserRole = 'ADMIN' | 'FREELANCE' | 'CLIENT' | 'CANDIDAT';
+
 export interface User {
   id: string;
+  name: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  avatar?: string;
-  createdAt: string;
+  roles: UserRole[];
 }
 
-// Client (company)
+// ----- Client Domain -----
+
 export interface Client {
   id: string;
   name: string;
-  logo?: string;
-  industry: string;
+  organizationName?: string;
   contactEmail: string;
-  contactPhone?: string;
-  address?: string;
-  createdAt: string;
+  notes?: string;
 }
 
-// Check Mission (job post)
-export type MissionStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'CLOSED' | 'ARCHIVED';
+// ----- COTON Check Domain -----
+
+export type CheckMissionStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
 
 export interface CheckMission {
   id: string;
   title: string;
+  reference: string;
   clientId: string;
-  client?: Client;
-  description: string;
-  location: string;
-  contractType: 'CDI' | 'CDD' | 'FREELANCE' | 'STAGE';
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  status: MissionStatus;
-  candidatesCount: number;
-  publishedAt?: string;
-  closedAt?: string;
+  status: CheckMissionStatus;
+  assignedReviewerIds: string[];
+  candidateIds: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-// Candidate attached to a mission
-export type CandidateStatus = 
-  | 'NEW' 
-  | 'SCREENING' 
-  | 'INTERVIEW' 
-  | 'TECHNICAL' 
-  | 'OFFER' 
-  | 'HIRED' 
-  | 'REJECTED';
-
 export interface Candidate {
   id: string;
-  missionId: string;
   userId: string;
-  user?: User;
-  status: CandidateStatus;
-  appliedAt: string;
+  checkMissionId: string;
+  status: string;
+  githubUsername?: string;
   notes?: string;
-  rating?: number;
-  updatedAt: string;
 }
 
-// Stats type for dashboard
+// ----- Dashboard Stats -----
+
 export interface DashboardStats {
   totalMissions: number;
   activeMissions: number;
