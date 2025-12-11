@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
+import { ScorecardCard } from '@/components/check/ScorecardCard';
 import { getCheckMissionDetail, type CheckMissionDetail } from '@/lib/services/checkAdminService';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
@@ -118,6 +119,9 @@ export default function CheckDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Scorecard Card */}
+      <ScorecardCard technicalTestDetail={mission.technicalTestDetail} />
 
       {/* Reviewers Card */}
       <Card className="rounded-xl shadow-sm">

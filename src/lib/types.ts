@@ -27,6 +27,37 @@ export interface Client {
 
 export type CheckMissionStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
 
+export type SkillLevel = 'JUNIOR' | 'CONFIRMÉ' | 'SENIOR' | 'EXPERT';
+
+export interface ExpertiseRatio {
+  name: string;
+  percentage: number;
+  level: SkillLevel;
+}
+
+export interface DomainRatio {
+  domainName: string;
+  percentage: number;
+  level: SkillLevel;
+  expertiseRatios: ExpertiseRatio[];
+}
+
+export interface StackEvaluation {
+  stackName: string;
+  percentage: number;
+  level: SkillLevel;
+}
+
+export interface ScoreCard {
+  primaryEvaluations: StackEvaluation[];
+  secondaryEvaluations: StackEvaluation[];
+}
+
+export interface TechnicalTestDetail {
+  domainRatios: DomainRatio[];
+  scoreCard?: ScoreCard;
+}
+
 export interface CheckMission {
   id: string;
   title: string;
@@ -35,6 +66,7 @@ export interface CheckMission {
   status: CheckMissionStatus;
   assignedReviewerIds: string[];
   candidateIds: string[];
+  technicalTestDetail?: TechnicalTestDetail;
   createdAt: string;
   updatedAt: string;
 }
