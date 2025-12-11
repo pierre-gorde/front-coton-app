@@ -100,6 +100,50 @@ const checkMissions: CheckMission[] = [
     status: 'OPEN',
     assignedReviewerIds: ['usr_002', 'usr_003'],
     candidateIds: ['cand_001', 'cand_002'],
+    technicalTestDetail: {
+      domainRatios: [
+        {
+          domainName: 'Frontend',
+          percentage: 60,
+          level: 'SENIOR',
+          expertiseRatios: [
+            { name: 'React', percentage: 40, level: 'SENIOR' },
+            { name: 'TypeScript', percentage: 35, level: 'CONFIRMÉ' },
+            { name: 'CSS/Tailwind', percentage: 25, level: 'CONFIRMÉ' },
+          ],
+        },
+        {
+          domainName: 'Backend',
+          percentage: 25,
+          level: 'CONFIRMÉ',
+          expertiseRatios: [
+            { name: 'Node.js', percentage: 60, level: 'CONFIRMÉ' },
+            { name: 'PostgreSQL', percentage: 40, level: 'JUNIOR' },
+          ],
+        },
+        {
+          domainName: 'DevOps',
+          percentage: 15,
+          level: 'JUNIOR',
+          expertiseRatios: [
+            { name: 'Docker', percentage: 70, level: 'JUNIOR' },
+            { name: 'CI/CD', percentage: 30, level: 'JUNIOR' },
+          ],
+        },
+      ],
+      scoreCard: {
+        primaryEvaluations: [
+          { stackName: 'React', percentage: 40, level: 'SENIOR' },
+          { stackName: 'TypeScript', percentage: 35, level: 'CONFIRMÉ' },
+          { stackName: 'Node.js', percentage: 25, level: 'CONFIRMÉ' },
+        ],
+        secondaryEvaluations: [
+          { stackName: 'Testing', percentage: 30, level: 'CONFIRMÉ' },
+          { stackName: 'Git', percentage: 40, level: 'SENIOR' },
+          { stackName: 'Architecture', percentage: 30, level: 'CONFIRMÉ' },
+        ],
+      },
+    },
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-20T14:30:00Z',
   },
@@ -111,6 +155,29 @@ const checkMissions: CheckMission[] = [
     status: 'OPEN',
     assignedReviewerIds: ['usr_003'],
     candidateIds: ['cand_003'],
+    technicalTestDetail: {
+      domainRatios: [
+        {
+          domainName: 'Backend',
+          percentage: 70,
+          level: 'EXPERT',
+          expertiseRatios: [
+            { name: 'Node.js', percentage: 50, level: 'EXPERT' },
+            { name: 'PostgreSQL', percentage: 30, level: 'SENIOR' },
+            { name: 'Redis', percentage: 20, level: 'CONFIRMÉ' },
+          ],
+        },
+        {
+          domainName: 'Architecture',
+          percentage: 30,
+          level: 'SENIOR',
+          expertiseRatios: [
+            { name: 'Microservices', percentage: 60, level: 'SENIOR' },
+            { name: 'API Design', percentage: 40, level: 'SENIOR' },
+          ],
+        },
+      ],
+    },
     createdAt: '2024-01-18T09:00:00Z',
     updatedAt: '2024-01-22T11:00:00Z',
   },
