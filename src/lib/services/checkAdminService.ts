@@ -3,7 +3,7 @@
 // ===========================================
 
 import { mockCheckAdminApi } from '@/lib/api/mockClient';
-import type { CheckMission, Client, User, Candidate } from '@/lib/types';
+import type { CheckMission, Client, User, Candidate, CandidateEvaluationView } from '@/lib/types';
 
 // ----- Types for enriched data -----
 
@@ -99,4 +99,10 @@ export async function listUsers(): Promise<User[]> {
 
 export async function getUserById(id: string): Promise<User | undefined> {
   return mockCheckAdminApi.getUserById(id);
+}
+
+// ----- Candidate Evaluation -----
+
+export async function getCandidateEvaluationView(candidateId: string): Promise<CandidateEvaluationView | undefined> {
+  return mockCheckAdminApi.getCandidateEvaluation(candidateId);
 }
