@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getMissions } from '@/lib/api/mockClient';
 import type { CheckMission, MissionStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,18 +25,10 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
   Building2,
   MapPin,
   Users,
-  MoreHorizontal,
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 const statusConfig: Record<MissionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -47,6 +39,7 @@ const statusConfig: Record<MissionStatus, { label: string; variant: 'default' | 
 };
 
 export default function CheckListPage() {
+  const navigate = useNavigate();
   const [missions, setMissions] = useState<CheckMission[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,6 +66,10 @@ export default function CheckListPage() {
       return `${min}-${max} ${currency}/jour`;
     }
     return `${(min / 1000).toFixed(0)}k-${(max / 1000).toFixed(0)}k ${currency}`;
+  };
+
+  const handleRowClick = (missionId: string) => {
+    navigate(`/dashboard/admin/check/${missionId}`);
   };
 
   return (
@@ -150,28 +147,25 @@ export default function CheckListPage() {
                     <TableHead className="font-semibold">Salaire</TableHead>
                     <TableHead className="font-semibold text-center">Candidats</TableHead>
                     <TableHead className="font-semibold">Statut</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredMissions.map((mission) => (
-                    <TableRow key={mission.id} className="hover:bg-muted/30">
+                    <TableRow 
+                      key={mission.id} 
+                      className="hover:bg-muted/30 cursor-pointer"
+                      onClick={() => handleRowClick(mission.id)}
+                    >
                       <TableCell>
-                        <Link 
-                          to={`/dashboard/admin/check/${mission.id}`}
-                          className="font-medium text-foreground hover:text-accent transition-colors"
-                        >
+                        <span className="font-medium text-foreground">
                           {mission.title}
-                        </Link>
+                        </span>
                       </TableCell>
                       <TableCell>
-                        <Link 
-                          to={`/dashboard/admin/client/${mission.clientId}`}
-                          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
+                        <div className="flex items-center gap-2 text-muted-foreground">
                           <Building2 className="h-4 w-4" />
                           <span>{mission.client?.name || '-'}</span>
-                        </Link>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -197,23 +191,6 @@ export default function CheckListPage() {
                         <Badge variant={statusConfig[mission.status].variant}>
                           {statusConfig[mission.status].label}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/dashboard/admin/check/${mission.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir le détail
-                              </Link>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
