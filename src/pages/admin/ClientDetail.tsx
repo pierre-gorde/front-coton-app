@@ -1,0 +1,8 @@
+import { useParams } from 'react-router-dom';
+import { PlaceholderPage } from '@/components/common/PlaceholderPage';
+
+export default function ClientDetailPage() {
+  const { clientId } = useParams();
+  
+  return <PlaceholderPage title={`Le détail du client (${clientId})`} />;
+}
