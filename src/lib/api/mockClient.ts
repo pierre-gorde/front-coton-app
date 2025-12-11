@@ -561,11 +561,18 @@ export const mockCheckAdminApi: CheckAdminApi = {
     }
 
     const client = clients.find(c => c.id === mission.clientId);
+    const candidateUser = users.find(u => u.id === candidate.userId);
+    
+    if (!candidateUser) {
+      return undefined;
+    }
+
     const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
     const reports = candidateReports.filter(r => r.candidateId === candidateId);
 
     return {
       candidate,
+      candidateUser,
       mission,
       client: client!,
       reviewers,
