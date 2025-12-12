@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { TechnicalTestDetail, SkillLevel, StackEvaluation, DomainRatio } from '@/lib/types';
+import type { TechnicalTestDetail, SkillLevel, StackEvaluation, DomainRatio, ScorecardCriterion, CriterionGroup } from '@/lib/types';
 
 interface ScorecardCardProps {
   technicalTestDetail?: TechnicalTestDetail;
@@ -69,6 +69,44 @@ function EvaluationList({ evaluations, title }: { evaluations: StackEvaluation[]
   );
 }
 
+function CriteriaList({ criteria, title, group }: { criteria: ScorecardCriterion[]; title: string; group: CriterionGroup }) {
+  const filteredCriteria = criteria.filter(c => c.group === group);
+  const totalWeight = filteredCriteria.reduce((sum, c) => sum + c.weightPercentage, 0);
+
+  if (filteredCriteria.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          {title}
+        </h4>
+        <Badge variant="outline" className="text-xs">
+          Total: {totalWeight}%
+        </Badge>
+      </div>
+      <div className="space-y-2">
+        {filteredCriteria.map((criterion) => (
+          <div key={criterion.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+            <div className="flex-1">
+              <span className="text-sm">{criterion.label}</span>
+              {criterion.description && (
+                <p className="text-xs text-muted-foreground mt-0.5">{criterion.description}</p>
+              )}
+            </div>
+            <Badge 
+              variant={group === 'PRIMARY' ? 'default' : 'secondary'} 
+              className="ml-2 text-xs font-semibold"
+            >
+              {criterion.weightPercentage}%
+            </Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
   if (!technicalTestDetail) {
     return (
@@ -85,7 +123,7 @@ export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
     );
   }
 
-  const { domainRatios, scoreCard } = technicalTestDetail;
+  const { domainRatios, scoreCard, scorecardCriteria } = technicalTestDetail;
 
   return (
     <Card className="rounded-xl shadow-sm">
@@ -103,10 +141,29 @@ export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
           </div>
         </div>
 
-        {/* ScoreCard Evaluations */}
+        {/* Scorecard Criteria - Primary vs Secondary */}
+        {scorecardCriteria && scorecardCriteria.length > 0 && (
+          <div className="border-t pt-6">
+            <h3 className="font-medium mb-4">Critères d'évaluation</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CriteriaList
+                criteria={scorecardCriteria}
+                title="Critères primaires"
+                group="PRIMARY"
+              />
+              <CriteriaList
+                criteria={scorecardCriteria}
+                title="Critères secondaires"
+                group="SECONDARY"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Legacy ScoreCard Evaluations */}
         {scoreCard && (
           <div className="border-t pt-6">
-            <h3 className="font-medium mb-4">Évaluations</h3>
+            <h3 className="font-medium mb-4">Évaluations techniques</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <EvaluationList
                 evaluations={scoreCard.primaryEvaluations}
