@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { CandidateReport, ScorecardCriterion } from '@/lib/types';
+import type { CandidateReport, ScorecardCriterion, CriterionGroup } from '@/lib/types';
 
 interface ReviewerEvaluationCardProps {
   report: CandidateReport;
@@ -35,16 +35,77 @@ function getScoreColor(score: number): string {
   return 'text-red-600 dark:text-red-400';
 }
 
+interface GroupedScoresTableProps {
+  report: CandidateReport;
+  scorecardCriteria: ScorecardCriterion[];
+  group: CriterionGroup;
+  title: string;
+}
+
+function GroupedScoresTable({ report, scorecardCriteria, group, title }: GroupedScoresTableProps) {
+  const groupCriteria = scorecardCriteria.filter(c => c.group === group);
+  const groupScores = report.criterionScores.filter(cs => 
+    groupCriteria.some(c => c.id === cs.criterionId)
+  );
+
+  if (groupScores.length === 0) return null;
+
+  const getCriterion = (criterionId: string) => 
+    scorecardCriteria.find(c => c.id === criterionId);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          {title}
+        </h5>
+        <Badge variant={group === 'PRIMARY' ? 'default' : 'secondary'} className="text-xs">
+          {groupCriteria.length} critères
+        </Badge>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Critère</TableHead>
+            <TableHead className="w-16 text-center">Poids</TableHead>
+            <TableHead className="w-16 text-right">Score</TableHead>
+            <TableHead>Commentaire</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {groupScores.map(cs => {
+            const criterion = getCriterion(cs.criterionId);
+            return (
+              <TableRow key={cs.criterionId}>
+                <TableCell className="font-medium">
+                  {criterion?.label ?? cs.criterionId}
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="outline" className="text-xs">
+                    {criterion?.weightPercentage ?? 0}%
+                  </Badge>
+                </TableCell>
+                <TableCell className={`text-right font-semibold ${getScoreColor(cs.score)}`}>
+                  {cs.score}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {cs.comment ?? '—'}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 export function ReviewerEvaluationCard({
   report,
   authorName,
   scorecardCriteria,
 }: ReviewerEvaluationCardProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  const getCriterionLabel = (criterionId: string): string => {
-    return scorecardCriteria.find(c => c.id === criterionId)?.label ?? criterionId;
-  };
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -103,34 +164,22 @@ export function ReviewerEvaluationCard({
             </p>
           </div>
 
-          {/* Criterion Scores Table */}
+          {/* Criterion Scores by Group */}
           {report.criterionScores.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Scores par critère</h4>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Critère</TableHead>
-                    <TableHead className="w-20 text-right">Score</TableHead>
-                    <TableHead>Commentaire</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {report.criterionScores.map(cs => (
-                    <TableRow key={cs.criterionId}>
-                      <TableCell className="font-medium">
-                        {getCriterionLabel(cs.criterionId)}
-                      </TableCell>
-                      <TableCell className={`text-right ${getScoreColor(cs.score)}`}>
-                        {cs.score}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {cs.comment ?? '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="space-y-4 pt-2">
+              <h4 className="text-sm font-medium">Scores par critère</h4>
+              <GroupedScoresTable
+                report={report}
+                scorecardCriteria={scorecardCriteria}
+                group="PRIMARY"
+                title="Critères primaires"
+              />
+              <GroupedScoresTable
+                report={report}
+                scorecardCriteria={scorecardCriteria}
+                group="SECONDARY"
+                title="Critères secondaires"
+              />
             </div>
           )}
         </CollapsibleContent>
