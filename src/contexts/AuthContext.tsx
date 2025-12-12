@@ -5,6 +5,7 @@ interface AuthContextType {
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
   userName: string;
+  userId: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -12,10 +13,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentRole, setCurrentRole] = useState<UserRole>('ADMIN');
   
-  const userName = 'Marie Dupont'; // Mock user
+  // Mock user - Alice Martin is ADMIN (usr_001)
+  const userName = 'Alice Martin';
+  const userId = 'usr_001';
 
   return (
-    <AuthContext.Provider value={{ currentRole, setCurrentRole, userName }}>
+    <AuthContext.Provider value={{ currentRole, setCurrentRole, userName, userId }}>
       {children}
     </AuthContext.Provider>
   );
