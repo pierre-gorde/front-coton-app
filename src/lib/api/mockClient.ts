@@ -764,4 +764,62 @@ export const mockCheckAdminApi: CheckAdminApi = {
     };
     return candidateReports[index];
   },
+
+  async getReportsByCandidate(candidateId: string): Promise<CandidateReport[]> {
+    await delay();
+    return candidateReports.filter(r => r.candidateId === candidateId);
+  },
+
+  async upsertFinalReport(input: {
+    candidateId: string;
+    authorUserId: string;
+    criterionScores: CriterionScore[];
+    finalScore: number;
+    summary: string;
+    positives: string;
+    negatives: string;
+    remarks: string;
+  }): Promise<CandidateReport> {
+    await delay();
+    const now = new Date().toISOString();
+    
+    // Find existing FINAL report for this candidate
+    const existingIndex = candidateReports.findIndex(
+      r => r.candidateId === input.candidateId && r.role === 'FINAL'
+    );
+
+    if (existingIndex !== -1) {
+      // Update existing
+      candidateReports[existingIndex] = {
+        ...candidateReports[existingIndex],
+        authorUserId: input.authorUserId,
+        criterionScores: input.criterionScores,
+        finalScore: input.finalScore,
+        summary: input.summary,
+        positives: input.positives,
+        negatives: input.negatives,
+        remarks: input.remarks,
+        updatedAt: now,
+      };
+      return candidateReports[existingIndex];
+    }
+
+    // Create new FINAL report
+    const newReport: CandidateReport = {
+      id: generateReportId(),
+      candidateId: input.candidateId,
+      authorUserId: input.authorUserId,
+      role: 'FINAL',
+      finalScore: input.finalScore,
+      summary: input.summary,
+      positives: input.positives,
+      negatives: input.negatives,
+      remarks: input.remarks,
+      criterionScores: input.criterionScores,
+      createdAt: now,
+      updatedAt: now,
+    };
+    candidateReports.push(newReport);
+    return newReport;
+  },
 };

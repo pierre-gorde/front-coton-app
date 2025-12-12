@@ -90,6 +90,8 @@ export interface CheckAdminApi {
     role: CandidateReportRole
   ): Promise<CandidateReport | undefined>;
 
+  getReportsByCandidate(candidateId: string): Promise<CandidateReport[]>;
+
   createReport(input: {
     candidateId: string;
     authorUserId: string;
@@ -98,4 +100,15 @@ export interface CheckAdminApi {
   }): Promise<CandidateReport>;
 
   updateReport(reportId: string, payload: ReportUpdatePayload): Promise<CandidateReport>;
+
+  upsertFinalReport(input: {
+    candidateId: string;
+    authorUserId: string;
+    criterionScores: CriterionScore[];
+    finalScore: number;
+    summary: string;
+    positives: string;
+    negatives: string;
+    remarks: string;
+  }): Promise<CandidateReport>;
 }

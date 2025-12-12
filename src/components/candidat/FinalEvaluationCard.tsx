@@ -1,6 +1,10 @@
-import { Award } from 'lucide-react';
+import { useState } from 'react';
+import { Award, RefreshCw, Loader2, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -11,11 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
 import type { CandidateReport, ScorecardCriterion, CriterionGroup } from '@/lib/types';
 
 interface FinalEvaluationCardProps {
   report: CandidateReport | undefined;
   scorecardCriteria: ScorecardCriterion[];
+  hasReviewerReports: boolean;
+  onGenerateFinal?: () => Promise<void>;
 }
 
 function getScoreColor(score: number): string {
@@ -94,20 +101,68 @@ function GroupedScoresTable({ report, scorecardCriteria, group, title }: Grouped
   );
 }
 
-export function FinalEvaluationCard({ report, scorecardCriteria }: FinalEvaluationCardProps) {
+export function FinalEvaluationCard({ 
+  report, 
+  scorecardCriteria, 
+  hasReviewerReports,
+  onGenerateFinal 
+}: FinalEvaluationCardProps) {
+  const { toast } = useToast();
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!onGenerateFinal) return;
+    setGenerating(true);
+    try {
+      await onGenerateFinal();
+      toast({
+        title: 'Rapport final généré',
+        description: 'Le rapport a été fusionné depuis les évaluations reviewers.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible de générer le rapport.',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <Card className="rounded-xl shadow-sm">
       <CardHeader className="p-6 pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <Award className="h-5 w-5" />
-          Évaluation finale
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Évaluation finale
+          </CardTitle>
+          {hasReviewerReports && onGenerateFinal && (
+            <Button onClick={handleGenerate} disabled={generating} variant="outline">
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              {report ? 'Mettre à jour' : 'Générer'} le rapport final
+            </Button>
+          )}
+        </div>
+        {report && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+            <Clock className="h-3 w-3" />
+            Dernière mise à jour: {format(new Date(report.updatedAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="p-6 pt-0">
         {!report ? (
           <Alert>
             <AlertDescription>
-              Évaluation finale non encore créée.
+              {hasReviewerReports 
+                ? "Cliquez sur 'Générer le rapport final' pour fusionner les évaluations des reviewers."
+                : "Évaluation finale non encore créée. Il faut d'abord avoir au moins un rapport reviewer."}
             </AlertDescription>
           </Alert>
         ) : (
@@ -125,7 +180,7 @@ export function FinalEvaluationCard({ report, scorecardCriteria }: FinalEvaluati
             {/* Summary */}
             <div className="bg-muted/50 rounded-lg p-4">
               <h4 className="text-sm font-medium mb-2">Avis global</h4>
-              <p className="text-sm">{report.summary}</p>
+              <p className="text-sm whitespace-pre-line">{report.summary}</p>
             </div>
 
             {/* Positifs / Négatifs / Remarques */}

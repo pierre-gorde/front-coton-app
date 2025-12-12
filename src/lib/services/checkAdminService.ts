@@ -171,3 +171,46 @@ export function computeFinalScore(
   
   return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 }
+
+/**
+ * Generate or update the FINAL report by merging reviewer reports.
+ * FINAL report is derived data, not the source of truth.
+ */
+export async function generateFinalReport(
+  candidateId: string,
+  authorUserId: string
+): Promise<CandidateReport> {
+  // Import merge utilities
+  const { generateMergedReportData } = await import('@/lib/utils/reportMerge');
+  
+  // Get candidate evaluation data
+  const evalData = await getCandidateEvaluationView(candidateId);
+  
+  if (!evalData) {
+    throw new Error(`Candidate ${candidateId} not found`);
+  }
+
+  const { reports, scorecardCriteria } = evalData;
+  
+  // Get reviewer reports
+  const primaryReport = reports.find(r => r.role === 'PRIMARY_REVIEWER');
+  const secondaryReport = reports.find(r => r.role === 'SECONDARY_REVIEWER');
+  
+  if (!primaryReport && !secondaryReport) {
+    throw new Error('At least one reviewer report is required to generate FINAL report');
+  }
+
+  // Generate merged data
+  const mergedData = generateMergedReportData(
+    primaryReport,
+    secondaryReport,
+    scorecardCriteria
+  );
+
+  // Upsert FINAL report
+  return mockCheckAdminApi.upsertFinalReport({
+    candidateId,
+    authorUserId,
+    ...mergedData,
+  });
+}

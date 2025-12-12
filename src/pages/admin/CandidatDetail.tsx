@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
-import { getCandidateEvaluationView } from '@/lib/services/checkAdminService';
+import { getCandidateEvaluationView, generateFinalReport } from '@/lib/services/checkAdminService';
+import { useAuth } from '@/contexts/AuthContext';
 import type { CandidateEvaluationView, CandidateReport, CandidateReportRole } from '@/lib/types';
 import { ReviewerEvaluationCard } from '@/components/candidat/ReviewerEvaluationCard';
 import { ReviewerReportForm } from '@/components/candidat/ReviewerReportForm';
@@ -15,6 +16,7 @@ import { FinalEvaluationCard } from '@/components/candidat/FinalEvaluationCard';
 
 export default function CandidatDetailPage() {
   const { candidatId } = useParams<{ candidatId: string }>();
+  const { userId } = useAuth();
   const [data, setData] = useState<CandidateEvaluationView | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,26 @@ export default function CandidatDetailPage() {
     });
   };
 
+  const handleGenerateFinal = async () => {
+    if (!candidatId) return;
+    const finalReport = await generateFinalReport(candidatId, userId);
+    if (!data) return;
+    
+    // Update or add the final report
+    const existingIndex = data.reports.findIndex(r => r.role === 'FINAL');
+    if (existingIndex !== -1) {
+      setData({
+        ...data,
+        reports: data.reports.map(r => r.role === 'FINAL' ? finalReport : r),
+      });
+    } else {
+      setData({
+        ...data,
+        reports: [...data.reports, finalReport],
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -73,6 +95,8 @@ export default function CandidatDetailPage() {
 
   // Separate reports by role
   const finalReport = reports.find(r => r.role === 'FINAL');
+  const reviewerReports = reports.filter(r => r.role === 'PRIMARY_REVIEWER' || r.role === 'SECONDARY_REVIEWER');
+  const hasReviewerReports = reviewerReports.length > 0;
 
   // Get reports for each reviewer with their assigned role
   const getReviewerRole = (reviewerIndex: number): CandidateReportRole => {
@@ -207,31 +231,34 @@ export default function CandidatDetailPage() {
       )}
 
       {/* Read-only view of completed reports (for reference) */}
-      {reports.filter(r => r.role !== 'FINAL').length > 0 && (
+      {reviewerReports.length > 0 && (
         <Card className="rounded-xl shadow-sm">
           <CardHeader className="p-6 pb-4">
             <CardTitle className="text-muted-foreground">Rapports soumis (lecture seule)</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-0 space-y-4">
-            {reports
-              .filter(r => r.role === 'PRIMARY_REVIEWER' || r.role === 'SECONDARY_REVIEWER')
-              .map(report => {
-                const author = reviewers.find(r => r.id === report.authorUserId);
-                return (
-                  <ReviewerEvaluationCard
-                    key={`readonly-${report.id}`}
-                    report={report}
-                    authorName={author?.name ?? 'Reviewer'}
-                    scorecardCriteria={scorecardCriteria}
-                  />
-                );
-              })}
+            {reviewerReports.map(report => {
+              const author = reviewers.find(r => r.id === report.authorUserId);
+              return (
+                <ReviewerEvaluationCard
+                  key={`readonly-${report.id}`}
+                  report={report}
+                  authorName={author?.name ?? 'Reviewer'}
+                  scorecardCriteria={scorecardCriteria}
+                />
+              );
+            })}
           </CardContent>
         </Card>
       )}
 
       {/* Card C: Évaluation finale */}
-      <FinalEvaluationCard report={finalReport} scorecardCriteria={scorecardCriteria} />
+      <FinalEvaluationCard 
+        report={finalReport} 
+        scorecardCriteria={scorecardCriteria} 
+        hasReviewerReports={hasReviewerReports}
+        onGenerateFinal={handleGenerateFinal}
+      />
     </div>
   );
 }
