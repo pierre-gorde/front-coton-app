@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Loader2, User, Briefcase, Building2, Users } from 'lucide-react';
 
@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
 import { getCandidateEvaluationView } from '@/lib/services/checkAdminService';
-import type { CandidateEvaluationView } from '@/lib/types';
+import type { CandidateEvaluationView, CandidateReport, CandidateReportRole } from '@/lib/types';
 import { ReviewerEvaluationCard } from '@/components/candidat/ReviewerEvaluationCard';
+import { ReviewerReportForm } from '@/components/candidat/ReviewerReportForm';
+import { CreateReportButton } from '@/components/candidat/CreateReportButton';
 import { FinalEvaluationCard } from '@/components/candidat/FinalEvaluationCard';
 
 export default function CandidatDetailPage() {
@@ -16,14 +18,33 @@ export default function CandidatDetailPage() {
   const [data, setData] = useState<CandidateEvaluationView | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!candidatId) return;
-
     setLoading(true);
-    getCandidateEvaluationView(candidatId)
-      .then(setData)
-      .finally(() => setLoading(false));
+    const result = await getCandidateEvaluationView(candidatId);
+    setData(result ?? null);
+    setLoading(false);
   }, [candidatId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleReportCreated = (newReport: CandidateReport) => {
+    if (!data) return;
+    setData({
+      ...data,
+      reports: [...data.reports, newReport],
+    });
+  };
+
+  const handleReportUpdated = (updatedReport: CandidateReport) => {
+    if (!data) return;
+    setData({
+      ...data,
+      reports: data.reports.map(r => r.id === updatedReport.id ? updatedReport : r),
+    });
+  };
 
   if (loading) {
     return (
@@ -51,17 +72,22 @@ export default function CandidatDetailPage() {
   ];
 
   // Separate reports by role
-  const reviewerReports = reports.filter(r => r.role === 'PRIMARY_REVIEWER' || r.role === 'SECONDARY_REVIEWER');
   const finalReport = reports.find(r => r.role === 'FINAL');
 
-  // Map reviewer IDs to their roles based on reports
-  const reviewerRoles = new Map<string, string>();
-  reports.forEach(r => {
-    if (r.role === 'PRIMARY_REVIEWER') {
-      reviewerRoles.set(r.authorUserId, 'Primary');
-    } else if (r.role === 'SECONDARY_REVIEWER') {
-      reviewerRoles.set(r.authorUserId, 'Secondary');
-    }
+  // Get reports for each reviewer with their assigned role
+  const getReviewerRole = (reviewerIndex: number): CandidateReportRole => {
+    // First reviewer is PRIMARY, second is SECONDARY
+    return reviewerIndex === 0 ? 'PRIMARY_REVIEWER' : 'SECONDARY_REVIEWER';
+  };
+
+  const getReviewerReport = (reviewerId: string, role: CandidateReportRole): CandidateReport | undefined => {
+    return reports.find(r => r.authorUserId === reviewerId && r.role === role);
+  };
+
+  // Map reviewer IDs to their roles based on position
+  const reviewerRolesMap = new Map<string, string>();
+  reviewers.forEach((reviewer, index) => {
+    reviewerRolesMap.set(reviewer.id, index === 0 ? 'Primary' : 'Secondary');
   });
 
   return (
@@ -112,8 +138,8 @@ export default function CandidatDetailPage() {
                 <span className="text-muted-foreground">Reviewers:</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {reviewers.map(reviewer => {
-                  const role = reviewerRoles.get(reviewer.id);
+                {reviewers.map((reviewer, index) => {
+                  const role = reviewerRolesMap.get(reviewer.id);
                   return (
                     <div key={reviewer.id} className="flex items-center gap-1">
                       <span className="text-sm">{reviewer.name}</span>
@@ -132,34 +158,74 @@ export default function CandidatDetailPage() {
             </div>
           </div>
 
-          {reports.length === 0 && (
+          {reviewers.length === 0 && scorecardCriteria.length === 0 && (
             <Alert>
               <AlertDescription>
-                Aucune évaluation n'a encore été soumise pour ce candidat.
+                Aucun reviewer assigné et aucun critère de scorecard configuré pour cette mission.
               </AlertDescription>
             </Alert>
           )}
         </CardContent>
       </Card>
 
-      {/* Card B: Evaluations par reviewer */}
-      {reviewerReports.length > 0 && (
+      {/* Card B: Evaluations par reviewer - Editable */}
+      {reviewers.length > 0 && (
         <Card className="rounded-xl shadow-sm">
           <CardHeader className="p-6 pb-4">
             <CardTitle>Évaluations reviewers</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-0 space-y-4">
-            {reviewerReports.map(report => {
-              const author = reviewers.find(r => r.id === report.authorUserId);
+            {reviewers.map((reviewer, index) => {
+              const role = getReviewerRole(index);
+              const report = getReviewerReport(reviewer.id, role);
+
+              if (report) {
+                return (
+                  <ReviewerReportForm
+                    key={report.id}
+                    report={report}
+                    authorName={reviewer.name}
+                    scorecardCriteria={scorecardCriteria}
+                    onReportUpdated={handleReportUpdated}
+                  />
+                );
+              }
+
               return (
-                <ReviewerEvaluationCard
-                  key={report.id}
-                  report={report}
-                  authorName={author?.name ?? 'Reviewer'}
+                <CreateReportButton
+                  key={`create-${reviewer.id}`}
+                  candidateId={candidate.id}
+                  reviewer={reviewer}
+                  role={role}
                   scorecardCriteria={scorecardCriteria}
+                  onReportCreated={handleReportCreated}
                 />
               );
             })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Read-only view of completed reports (for reference) */}
+      {reports.filter(r => r.role !== 'FINAL').length > 0 && (
+        <Card className="rounded-xl shadow-sm">
+          <CardHeader className="p-6 pb-4">
+            <CardTitle className="text-muted-foreground">Rapports soumis (lecture seule)</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 pt-0 space-y-4">
+            {reports
+              .filter(r => r.role === 'PRIMARY_REVIEWER' || r.role === 'SECONDARY_REVIEWER')
+              .map(report => {
+                const author = reviewers.find(r => r.id === report.authorUserId);
+                return (
+                  <ReviewerEvaluationCard
+                    key={`readonly-${report.id}`}
+                    report={report}
+                    authorName={author?.name ?? 'Reviewer'}
+                    scorecardCriteria={scorecardCriteria}
+                  />
+                );
+              })}
           </CardContent>
         </Card>
       )}

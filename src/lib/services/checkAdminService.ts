@@ -3,7 +3,8 @@
 // ===========================================
 
 import { mockCheckAdminApi } from '@/lib/api/mockClient';
-import type { CheckMission, Client, User, Candidate, CandidateEvaluationView } from '@/lib/types';
+import type { CheckMission, Client, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, ScorecardCriterion } from '@/lib/types';
+import type { ReportUpdatePayload } from '@/lib/api/contracts';
 
 // ----- Types for enriched data -----
 
@@ -105,4 +106,68 @@ export async function getUserById(id: string): Promise<User | undefined> {
 
 export async function getCandidateEvaluationView(candidateId: string): Promise<CandidateEvaluationView | undefined> {
   return mockCheckAdminApi.getCandidateEvaluation(candidateId);
+}
+
+// ----- Reviewer Reports -----
+
+/**
+ * Get existing report or create a new empty one for the reviewer
+ */
+export async function getOrCreateReviewerReport(
+  candidateId: string,
+  userId: string,
+  role: CandidateReportRole,
+  scorecardCriteria: ScorecardCriterion[]
+): Promise<CandidateReport> {
+  // Check if report already exists
+  const existingReport = await mockCheckAdminApi.getReportByCandidateAndRole(candidateId, userId, role);
+  
+  if (existingReport) {
+    return existingReport;
+  }
+
+  // Create new report with empty scores for all criteria
+  const criterionScores: CriterionScore[] = scorecardCriteria.map(criterion => ({
+    criterionId: criterion.id,
+    score: 0,
+    comment: '',
+  }));
+
+  return mockCheckAdminApi.createReport({
+    candidateId,
+    authorUserId: userId,
+    role,
+    criterionScores,
+  });
+}
+
+/**
+ * Update a reviewer report. finalScore is recomputed from weighted criterion scores.
+ */
+export async function updateReviewerReport(
+  reportId: string,
+  payload: ReportUpdatePayload
+): Promise<CandidateReport> {
+  return mockCheckAdminApi.updateReport(reportId, payload);
+}
+
+/**
+ * Compute the weighted final score from criterion scores
+ */
+export function computeFinalScore(
+  criterionScores: CriterionScore[],
+  scorecardCriteria: ScorecardCriterion[]
+): number {
+  let totalWeight = 0;
+  let weightedSum = 0;
+  
+  for (const cs of criterionScores) {
+    const criterion = scorecardCriteria.find(c => c.id === cs.criterionId);
+    if (criterion) {
+      totalWeight += criterion.weightPercentage;
+      weightedSum += cs.score * criterion.weightPercentage;
+    }
+  }
+  
+  return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 }
