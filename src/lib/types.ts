@@ -65,6 +65,16 @@ export interface ScorecardCriterion {
   description?: string;
 }
 
+export interface ScorecardSuggestionRule {
+  domainName: string;
+  minLevel: ExpertiseLevel;
+  criteria: Array<{
+    label: string;
+    group: CriterionGroup;
+    weightPercentage: number;
+  }>;
+}
+
 export interface TechnicalTestDetail {
   id: string;
   missionId: string;

@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - Mock API Implementation
 // ===========================================
 
-import type { User, Client, CheckMission, Candidate, ScorecardCriterion, CandidateReport, CandidateEvaluationView } from '@/lib/types';
+import type { User, Client, CheckMission, Candidate, ScorecardCriterion, CandidateReport, CandidateEvaluationView, ScorecardSuggestionRule, DomainRatio, ExpertiseLevel, CriterionGroup } from '@/lib/types';
 import type { CheckAdminApi } from './contracts';
 
 // Simulate network delay
@@ -20,6 +20,130 @@ const generateClientId = () => `cli_${String(++clientIdCounter).padStart(3, '0')
 const generateMissionId = () => `mis_${String(++missionIdCounter).padStart(3, '0')}`;
 const generateCandidateId = () => `cand_${String(++candidateIdCounter).padStart(3, '0')}`;
 const generateReportId = () => `rep_${String(++reportIdCounter).padStart(3, '0')}`;
+let criterionIdCounter = 200;
+const generateCriterionId = () => `crit_${String(++criterionIdCounter).padStart(3, '0')}`;
+
+// ===========================================
+// SCORECARD SUGGESTION RULES
+// ===========================================
+
+const EXPERTISE_LEVEL_ORDER: Record<ExpertiseLevel, number> = {
+  JUNIOR: 1,
+  INTERMEDIATE: 2,
+  SENIOR: 3,
+  EXPERT: 4,
+};
+
+const scorecardSuggestionRules: ScorecardSuggestionRule[] = [
+  // Frontend SENIOR+
+  {
+    domainName: 'Frontend',
+    minLevel: 'SENIOR',
+    criteria: [
+      { label: 'Lisibilité du code', group: 'PRIMARY', weightPercentage: 25 },
+      { label: 'Architecture frontend', group: 'PRIMARY', weightPercentage: 25 },
+      { label: 'Sécurité frontend', group: 'PRIMARY', weightPercentage: 15 },
+      { label: 'Performance', group: 'SECONDARY', weightPercentage: 15 },
+      { label: 'Testing', group: 'SECONDARY', weightPercentage: 10 },
+      { label: 'Git & Versioning', group: 'SECONDARY', weightPercentage: 10 },
+    ],
+  },
+  // Frontend JUNIOR
+  {
+    domainName: 'Frontend',
+    minLevel: 'JUNIOR',
+    criteria: [
+      { label: 'Lisibilité du code', group: 'PRIMARY', weightPercentage: 40 },
+      { label: 'Git & Versioning', group: 'PRIMARY', weightPercentage: 30 },
+      { label: 'Testing', group: 'SECONDARY', weightPercentage: 30 },
+    ],
+  },
+  // Backend SENIOR+
+  {
+    domainName: 'Backend',
+    minLevel: 'SENIOR',
+    criteria: [
+      { label: 'Architecture API', group: 'PRIMARY', weightPercentage: 25 },
+      { label: 'Sécurité backend', group: 'PRIMARY', weightPercentage: 20 },
+      { label: 'Base de données', group: 'PRIMARY', weightPercentage: 20 },
+      { label: 'Performance serveur', group: 'SECONDARY', weightPercentage: 15 },
+      { label: 'Testing backend', group: 'SECONDARY', weightPercentage: 10 },
+      { label: 'Documentation', group: 'SECONDARY', weightPercentage: 10 },
+    ],
+  },
+  // Backend JUNIOR
+  {
+    domainName: 'Backend',
+    minLevel: 'JUNIOR',
+    criteria: [
+      { label: 'Lisibilité du code', group: 'PRIMARY', weightPercentage: 35 },
+      { label: 'Base de données', group: 'PRIMARY', weightPercentage: 35 },
+      { label: 'Testing backend', group: 'SECONDARY', weightPercentage: 30 },
+    ],
+  },
+  // DevOps
+  {
+    domainName: 'DevOps',
+    minLevel: 'JUNIOR',
+    criteria: [
+      { label: 'CI/CD', group: 'PRIMARY', weightPercentage: 40 },
+      { label: 'Conteneurisation', group: 'PRIMARY', weightPercentage: 35 },
+      { label: 'Monitoring', group: 'SECONDARY', weightPercentage: 25 },
+    ],
+  },
+];
+
+/**
+ * Generate scorecardCriteria from domainRatios using suggestion rules.
+ * Selects the best matching rule per domain (highest minLevel that still applies).
+ * Normalizes weights to sum to 100.
+ */
+function generateScorecardCriteria(domainRatios: DomainRatio[]): ScorecardCriterion[] {
+  const collectedCriteria: Array<{ label: string; group: CriterionGroup; weightPercentage: number }> = [];
+
+  for (const domain of domainRatios) {
+    // Map SkillLevel to ExpertiseLevel for comparison
+    const domainLevel = domain.level === 'CONFIRMÉ' ? 'INTERMEDIATE' : domain.level as ExpertiseLevel;
+    const domainLevelOrder = EXPERTISE_LEVEL_ORDER[domainLevel];
+
+    // Find all matching rules for this domain
+    const matchingRules = scorecardSuggestionRules.filter(
+      rule => rule.domainName === domain.domainName && EXPERTISE_LEVEL_ORDER[rule.minLevel] <= domainLevelOrder
+    );
+
+    if (matchingRules.length === 0) continue;
+
+    // Select the rule with the highest minLevel that still applies
+    const bestRule = matchingRules.reduce((best, current) =>
+      EXPERTISE_LEVEL_ORDER[current.minLevel] > EXPERTISE_LEVEL_ORDER[best.minLevel] ? current : best
+    );
+
+    // Scale criteria weights by domain percentage
+    const scaleFactor = domain.percentage / 100;
+    for (const criterion of bestRule.criteria) {
+      collectedCriteria.push({
+        label: criterion.label,
+        group: criterion.group,
+        weightPercentage: Math.round(criterion.weightPercentage * scaleFactor),
+      });
+    }
+  }
+
+  // Normalize weights to sum to 100
+  const totalWeight = collectedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0);
+  const normalizedCriteria = collectedCriteria.map(c => ({
+    ...c,
+    weightPercentage: totalWeight > 0 ? Math.round((c.weightPercentage / totalWeight) * 100) : 0,
+  }));
+
+  // Generate IDs and return
+  return normalizedCriteria.map(c => ({
+    id: generateCriterionId(),
+    label: c.label,
+    group: c.group,
+    weightPercentage: c.weightPercentage,
+  }));
+}
 
 // ===========================================
 // IN-MEMORY DATA STORES
@@ -93,6 +217,60 @@ const clients: Client[] = [
   },
 ];
 
+// Domain ratios definitions (used to generate scorecard criteria)
+const mis001DomainRatios: DomainRatio[] = [
+  {
+    domainName: 'Frontend',
+    percentage: 60,
+    level: 'SENIOR',
+    expertiseRatios: [
+      { name: 'React', percentage: 40, level: 'SENIOR' },
+      { name: 'TypeScript', percentage: 35, level: 'CONFIRMÉ' },
+      { name: 'CSS/Tailwind', percentage: 25, level: 'CONFIRMÉ' },
+    ],
+  },
+  {
+    domainName: 'Backend',
+    percentage: 25,
+    level: 'CONFIRMÉ',
+    expertiseRatios: [
+      { name: 'Node.js', percentage: 60, level: 'CONFIRMÉ' },
+      { name: 'PostgreSQL', percentage: 40, level: 'JUNIOR' },
+    ],
+  },
+  {
+    domainName: 'DevOps',
+    percentage: 15,
+    level: 'JUNIOR',
+    expertiseRatios: [
+      { name: 'Docker', percentage: 70, level: 'JUNIOR' },
+      { name: 'CI/CD', percentage: 30, level: 'JUNIOR' },
+    ],
+  },
+];
+
+const mis002DomainRatios: DomainRatio[] = [
+  {
+    domainName: 'Backend',
+    percentage: 70,
+    level: 'EXPERT',
+    expertiseRatios: [
+      { name: 'Node.js', percentage: 50, level: 'EXPERT' },
+      { name: 'PostgreSQL', percentage: 30, level: 'SENIOR' },
+      { name: 'Redis', percentage: 20, level: 'CONFIRMÉ' },
+    ],
+  },
+  {
+    domainName: 'Architecture',
+    percentage: 30,
+    level: 'SENIOR',
+    expertiseRatios: [
+      { name: 'Microservices', percentage: 60, level: 'SENIOR' },
+      { name: 'API Design', percentage: 40, level: 'SENIOR' },
+    ],
+  },
+];
+
 const checkMissions: CheckMission[] = [
   {
     id: 'mis_001',
@@ -105,36 +283,7 @@ const checkMissions: CheckMission[] = [
     technicalTestDetail: {
       id: 'ttd_001',
       missionId: 'mis_001',
-      domainRatios: [
-        {
-          domainName: 'Frontend',
-          percentage: 60,
-          level: 'SENIOR',
-          expertiseRatios: [
-            { name: 'React', percentage: 40, level: 'SENIOR' },
-            { name: 'TypeScript', percentage: 35, level: 'CONFIRMÉ' },
-            { name: 'CSS/Tailwind', percentage: 25, level: 'CONFIRMÉ' },
-          ],
-        },
-        {
-          domainName: 'Backend',
-          percentage: 25,
-          level: 'CONFIRMÉ',
-          expertiseRatios: [
-            { name: 'Node.js', percentage: 60, level: 'CONFIRMÉ' },
-            { name: 'PostgreSQL', percentage: 40, level: 'JUNIOR' },
-          ],
-        },
-        {
-          domainName: 'DevOps',
-          percentage: 15,
-          level: 'JUNIOR',
-          expertiseRatios: [
-            { name: 'Docker', percentage: 70, level: 'JUNIOR' },
-            { name: 'CI/CD', percentage: 30, level: 'JUNIOR' },
-          ],
-        },
-      ],
+      domainRatios: mis001DomainRatios,
       scoreCard: {
         primaryEvaluations: [
           { stackName: 'React', percentage: 40, level: 'SENIOR' },
@@ -147,13 +296,7 @@ const checkMissions: CheckMission[] = [
           { stackName: 'Architecture', percentage: 30, level: 'CONFIRMÉ' },
         ],
       },
-      scorecardCriteria: [
-        { id: 'crit_001', label: 'Maîtrise React / TypeScript', group: 'PRIMARY', weightPercentage: 30, description: 'Évaluer la connaissance des hooks, patterns React et TypeScript' },
-        { id: 'crit_002', label: 'Architecture & Design Patterns', group: 'PRIMARY', weightPercentage: 25, description: 'Capacité à structurer le code proprement' },
-        { id: 'crit_003', label: 'Qualité du code & Tests', group: 'PRIMARY', weightPercentage: 20, description: 'Tests unitaires, lisibilité, documentation' },
-        { id: 'crit_004', label: 'Git & Versioning', group: 'SECONDARY', weightPercentage: 15, description: 'Maîtrise des workflows Git' },
-        { id: 'crit_005', label: 'Communication & Clarté', group: 'SECONDARY', weightPercentage: 10, description: 'Clarté des explications, documentation' },
-      ],
+      scorecardCriteria: generateScorecardCriteria(mis001DomainRatios),
     },
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-20T14:30:00Z',
@@ -169,33 +312,8 @@ const checkMissions: CheckMission[] = [
     technicalTestDetail: {
       id: 'ttd_002',
       missionId: 'mis_002',
-      domainRatios: [
-        {
-          domainName: 'Backend',
-          percentage: 70,
-          level: 'EXPERT',
-          expertiseRatios: [
-            { name: 'Node.js', percentage: 50, level: 'EXPERT' },
-            { name: 'PostgreSQL', percentage: 30, level: 'SENIOR' },
-            { name: 'Redis', percentage: 20, level: 'CONFIRMÉ' },
-          ],
-        },
-        {
-          domainName: 'Architecture',
-          percentage: 30,
-          level: 'SENIOR',
-          expertiseRatios: [
-            { name: 'Microservices', percentage: 60, level: 'SENIOR' },
-            { name: 'API Design', percentage: 40, level: 'SENIOR' },
-          ],
-        },
-      ],
-      scorecardCriteria: [
-        { id: 'crit_101', label: 'Maîtrise Node.js', group: 'PRIMARY', weightPercentage: 35, description: 'APIs, performances, async' },
-        { id: 'crit_102', label: 'Base de données', group: 'PRIMARY', weightPercentage: 30, description: 'PostgreSQL, optimisation requêtes' },
-        { id: 'crit_103', label: 'Architecture', group: 'PRIMARY', weightPercentage: 20, description: 'Microservices, patterns' },
-        { id: 'crit_104', label: 'Testing', group: 'SECONDARY', weightPercentage: 15, description: 'Tests unitaires et intégration' },
-      ],
+      domainRatios: mis002DomainRatios,
+      scorecardCriteria: generateScorecardCriteria(mis002DomainRatios),
     },
     createdAt: '2024-01-18T09:00:00Z',
     updatedAt: '2024-01-22T11:00:00Z',
@@ -265,69 +383,78 @@ const candidates: Candidate[] = [
 // Note: scorecardCriteria are now embedded in TechnicalTestDetail per mission
 
 // ----- Candidate Reports -----
+// Reports reference criteria from the mission's technicalTestDetail.scorecardCriteria
+// We need to build these after missions are initialized
 
-const candidateReports: CandidateReport[] = [
-  {
-    id: 'rep_001',
-    candidateId: 'cand_001',
-    authorUserId: 'usr_002',
-    role: 'PRIMARY_REVIEWER',
-    finalScore: 78,
-    summary: 'Emma démontre une solide maîtrise de React et TypeScript. Son code est propre et bien structuré. Elle répond aux attentes techniques du poste avec quelques axes d\'amélioration sur les patterns avancés.',
-    positives: '- Excellente connaissance de React hooks\n- Code lisible et bien documenté\n- Bonne compréhension des principes SOLID',
-    negatives: '- Quelques lacunes sur les design patterns avancés\n- Tests unitaires présents mais couverture perfectible',
-    remarks: 'Candidate prometteuse, recommandée pour un second entretien technique approfondi.',
-    criterionScores: [
-      { criterionId: 'crit_001', score: 85, comment: 'Très bonne maîtrise de React' },
-      { criterionId: 'crit_002', score: 70, comment: 'Connaissance correcte, à approfondir' },
-      { criterionId: 'crit_003', score: 75, comment: 'Tests présents, couverture moyenne' },
-      { criterionId: 'crit_004', score: 80, comment: 'Explications claires' },
-      { criterionId: 'crit_005', score: 78, comment: 'Autonome sur les tâches courantes' },
-    ],
-    createdAt: '2024-01-10T14:30:00Z',
-    updatedAt: '2024-01-10T14:30:00Z',
-  },
-  {
-    id: 'rep_002',
-    candidateId: 'cand_001',
-    authorUserId: 'usr_003',
-    role: 'SECONDARY_REVIEWER',
-    finalScore: 82,
-    summary: 'Évaluation positive. Emma a démontré une capacité à résoudre des problèmes complexes et à communiquer efficacement ses choix techniques.',
-    positives: '- Résolution de problèmes méthodique\n- Bonne gestion du temps\n- Questions pertinentes posées',
-    negatives: '- Expérience limitée sur les architectures micro-frontend\n- Pourrait améliorer la gestion des erreurs',
-    remarks: 'Profil intéressant pour le poste, compatible avec l\'équipe.',
-    criterionScores: [
-      { criterionId: 'crit_001', score: 88, comment: 'Maîtrise confirmée' },
-      { criterionId: 'crit_002', score: 75, comment: 'Bonne base architecturale' },
-      { criterionId: 'crit_003', score: 80, comment: 'Approche qualité solide' },
-      { criterionId: 'crit_004', score: 85, comment: 'Communication fluide' },
-      { criterionId: 'crit_005', score: 82, comment: 'Proactive dans les échanges' },
-    ],
-    createdAt: '2024-01-11T10:00:00Z',
-    updatedAt: '2024-01-11T10:00:00Z',
-  },
-  {
-    id: 'rep_003',
-    candidateId: 'cand_001',
-    authorUserId: 'usr_001',
-    role: 'FINAL',
-    finalScore: 80,
-    summary: 'Synthèse finale : Emma Petit est une candidate solide qui répond aux critères techniques du poste. Les deux reviewers s\'accordent sur ses compétences React/TS et sa capacité de communication. Recommandation positive.',
-    positives: '- Compétences techniques validées par les deux reviewers\n- Soft skills au-dessus de la moyenne\n- Motivation évidente pour le projet',
-    negatives: '- Points d\'amélioration identifiés sur l\'architecture avancée\n- Expérience à consolider sur certains patterns',
-    remarks: 'Avis favorable à l\'embauche. Prévoir un accompagnement sur les sujets architecture les premiers mois.',
-    criterionScores: [
-      { criterionId: 'crit_001', score: 86, comment: 'Moyenne des évaluations' },
-      { criterionId: 'crit_002', score: 72, comment: 'Point d\'attention' },
-      { criterionId: 'crit_003', score: 77, comment: 'Satisfaisant' },
-      { criterionId: 'crit_004', score: 82, comment: 'Point fort' },
-      { criterionId: 'crit_005', score: 80, comment: 'Satisfaisant' },
-    ],
-    createdAt: '2024-01-12T16:00:00Z',
-    updatedAt: '2024-01-12T16:00:00Z',
-  },
-];
+function buildCandidateReports(): CandidateReport[] {
+  // Get criteria IDs from mis_001 (candidate cand_001 is on this mission)
+  const mis001Criteria = checkMissions[0].technicalTestDetail?.scorecardCriteria ?? [];
+  
+  // Map scores to the generated criteria (in order)
+  const getScoresForMis001 = (scores: number[], comments: string[]) => {
+    return mis001Criteria.slice(0, scores.length).map((crit, i) => ({
+      criterionId: crit.id,
+      score: scores[i],
+      comment: comments[i],
+    }));
+  };
+
+  return [
+    {
+      id: 'rep_001',
+      candidateId: 'cand_001',
+      authorUserId: 'usr_002',
+      role: 'PRIMARY_REVIEWER',
+      finalScore: 78,
+      summary: 'Emma démontre une solide maîtrise de React et TypeScript. Son code est propre et bien structuré. Elle répond aux attentes techniques du poste avec quelques axes d\'amélioration sur les patterns avancés.',
+      positives: '- Excellente connaissance de React hooks\n- Code lisible et bien documenté\n- Bonne compréhension des principes SOLID',
+      negatives: '- Quelques lacunes sur les design patterns avancés\n- Tests unitaires présents mais couverture perfectible',
+      remarks: 'Candidate prometteuse, recommandée pour un second entretien technique approfondi.',
+      criterionScores: getScoresForMis001(
+        [85, 70, 75, 80, 78, 82, 76, 79, 81, 77],
+        ['Très bonne maîtrise', 'Correcte', 'Tests présents', 'Clair', 'Autonome', 'Bon', 'OK', 'Satisfaisant', 'Bien', 'Correct']
+      ),
+      createdAt: '2024-01-10T14:30:00Z',
+      updatedAt: '2024-01-10T14:30:00Z',
+    },
+    {
+      id: 'rep_002',
+      candidateId: 'cand_001',
+      authorUserId: 'usr_003',
+      role: 'SECONDARY_REVIEWER',
+      finalScore: 82,
+      summary: 'Évaluation positive. Emma a démontré une capacité à résoudre des problèmes complexes et à communiquer efficacement ses choix techniques.',
+      positives: '- Résolution de problèmes méthodique\n- Bonne gestion du temps\n- Questions pertinentes posées',
+      negatives: '- Expérience limitée sur les architectures micro-frontend\n- Pourrait améliorer la gestion des erreurs',
+      remarks: 'Profil intéressant pour le poste, compatible avec l\'équipe.',
+      criterionScores: getScoresForMis001(
+        [88, 75, 80, 85, 82, 79, 83, 81, 84, 78],
+        ['Maîtrise confirmée', 'Bonne base', 'Approche solide', 'Fluide', 'Proactive', 'Bon', 'Bien', 'OK', 'Satisfaisant', 'Correct']
+      ),
+      createdAt: '2024-01-11T10:00:00Z',
+      updatedAt: '2024-01-11T10:00:00Z',
+    },
+    {
+      id: 'rep_003',
+      candidateId: 'cand_001',
+      authorUserId: 'usr_001',
+      role: 'FINAL',
+      finalScore: 80,
+      summary: 'Synthèse finale : Emma Petit est une candidate solide qui répond aux critères techniques du poste. Les deux reviewers s\'accordent sur ses compétences React/TS et sa capacité de communication. Recommandation positive.',
+      positives: '- Compétences techniques validées par les deux reviewers\n- Soft skills au-dessus de la moyenne\n- Motivation évidente pour le projet',
+      negatives: '- Points d\'amélioration identifiés sur l\'architecture avancée\n- Expérience à consolider sur certains patterns',
+      remarks: 'Avis favorable à l\'embauche. Prévoir un accompagnement sur les sujets architecture les premiers mois.',
+      criterionScores: getScoresForMis001(
+        [86, 72, 77, 82, 80, 80, 79, 80, 82, 77],
+        ['Moyenne évaluations', 'Point d\'attention', 'Satisfaisant', 'Point fort', 'Satisfaisant', 'OK', 'Bon', 'Bien', 'Correct', 'OK']
+      ),
+      createdAt: '2024-01-12T16:00:00Z',
+      updatedAt: '2024-01-12T16:00:00Z',
+    },
+  ];
+}
+
+const candidateReports: CandidateReport[] = buildCandidateReports();
 
 // ===========================================
 // MOCK API IMPLEMENTATION
