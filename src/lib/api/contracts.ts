@@ -2,7 +2,18 @@
 // COTON Check > ADMIN - API Contracts
 // ===========================================
 
-import type { Client, CheckMission, User, Candidate, CandidateEvaluationView } from '@/lib/types';
+import type { Client, CheckMission, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore } from '@/lib/types';
+
+/**
+ * Payload for creating/updating a reviewer report
+ */
+export interface ReportUpdatePayload {
+  criterionScores: CriterionScore[];
+  summary: string;
+  positives: string;
+  negatives: string;
+  remarks: string;
+}
 
 /**
  * API contract interface for COTON Check > ADMIN domain.
@@ -65,9 +76,26 @@ export interface CheckAdminApi {
     input: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>>
   ): Promise<Candidate>;
 
+  deleteCandidate(id: string): Promise<void>;
+
   // ----- Candidate Evaluation -----
 
-  getCandidateEvaluation(candidateId: string): Promise<CandidateEvaluationView | undefined>
+  getCandidateEvaluation(candidateId: string): Promise<CandidateEvaluationView | undefined>;
 
-  deleteCandidate(id: string): Promise<void>;
+  // ----- Candidate Reports -----
+
+  getReportByCandidateAndRole(
+    candidateId: string,
+    authorUserId: string,
+    role: CandidateReportRole
+  ): Promise<CandidateReport | undefined>;
+
+  createReport(input: {
+    candidateId: string;
+    authorUserId: string;
+    role: CandidateReportRole;
+    criterionScores: CriterionScore[];
+  }): Promise<CandidateReport>;
+
+  updateReport(reportId: string, payload: ReportUpdatePayload): Promise<CandidateReport>;
 }

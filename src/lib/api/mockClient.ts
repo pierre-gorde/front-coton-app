@@ -2,8 +2,8 @@
 // COTON Check > ADMIN - Mock API Implementation
 // ===========================================
 
-import type { User, Client, CheckMission, Candidate, ScorecardCriterion, CandidateReport, CandidateEvaluationView, ScorecardSuggestionRule, DomainRatio, ExpertiseLevel, CriterionGroup } from '@/lib/types';
-import type { CheckAdminApi } from './contracts';
+import type { User, Client, CheckMission, Candidate, ScorecardCriterion, CandidateReport, CandidateEvaluationView, ScorecardSuggestionRule, DomainRatio, ExpertiseLevel, CriterionGroup, CandidateReportRole, CriterionScore } from '@/lib/types';
+import type { CheckAdminApi, ReportUpdatePayload } from './contracts';
 
 // Simulate network delay
 const delay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));
@@ -692,5 +692,76 @@ export const mockCheckAdminApi: CheckAdminApi = {
       scorecardCriteria,
       reports,
     };
+  },
+
+  // ----- Candidate Reports -----
+
+  async getReportByCandidateAndRole(
+    candidateId: string,
+    authorUserId: string,
+    role: CandidateReportRole
+  ): Promise<CandidateReport | undefined> {
+    await delay();
+    return candidateReports.find(
+      r => r.candidateId === candidateId && r.authorUserId === authorUserId && r.role === role
+    );
+  },
+
+  async createReport(input: {
+    candidateId: string;
+    authorUserId: string;
+    role: CandidateReportRole;
+    criterionScores: CriterionScore[];
+  }): Promise<CandidateReport> {
+    await delay();
+    const now = new Date().toISOString();
+    const newReport: CandidateReport = {
+      id: generateReportId(),
+      candidateId: input.candidateId,
+      authorUserId: input.authorUserId,
+      role: input.role,
+      finalScore: 0,
+      summary: '',
+      positives: '',
+      negatives: '',
+      remarks: '',
+      criterionScores: input.criterionScores,
+      createdAt: now,
+      updatedAt: now,
+    };
+    candidateReports.push(newReport);
+    return newReport;
+  },
+
+  async updateReport(reportId: string, payload: ReportUpdatePayload): Promise<CandidateReport> {
+    await delay();
+    const index = candidateReports.findIndex(r => r.id === reportId);
+    if (index === -1) {
+      throw new Error(`Report with id ${reportId} not found`);
+    }
+
+    // Compute weighted finalScore
+    const candidate = candidates.find(c => c.id === candidateReports[index].candidateId);
+    const mission = checkMissions.find(m => m.id === candidate?.checkMissionId);
+    const scorecardCriteria = mission?.technicalTestDetail?.scorecardCriteria ?? [];
+
+    let totalWeight = 0;
+    let weightedSum = 0;
+    for (const cs of payload.criterionScores) {
+      const criterion = scorecardCriteria.find(c => c.id === cs.criterionId);
+      if (criterion) {
+        totalWeight += criterion.weightPercentage;
+        weightedSum += cs.score * criterion.weightPercentage;
+      }
+    }
+    const finalScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+
+    candidateReports[index] = {
+      ...candidateReports[index],
+      ...payload,
+      finalScore,
+      updatedAt: new Date().toISOString(),
+    };
+    return candidateReports[index];
   },
 };
