@@ -29,6 +29,10 @@ export type CheckMissionStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
 
 export type SkillLevel = 'JUNIOR' | 'CONFIRMÉ' | 'SENIOR' | 'EXPERT';
 
+export type ExpertiseLevel = 'JUNIOR' | 'INTERMEDIATE' | 'SENIOR' | 'EXPERT';
+
+export type CriterionGroup = 'PRIMARY' | 'SECONDARY';
+
 export interface ExpertiseRatio {
   name: string;
   percentage: number;
@@ -53,9 +57,20 @@ export interface ScoreCard {
   secondaryEvaluations: StackEvaluation[];
 }
 
+export interface ScorecardCriterion {
+  id: string;
+  label: string;
+  group: CriterionGroup;
+  weightPercentage: number;
+  description?: string;
+}
+
 export interface TechnicalTestDetail {
+  id: string;
+  missionId: string;
   domainRatios: DomainRatio[];
   scoreCard?: ScoreCard;
+  scorecardCriteria: ScorecardCriterion[];
 }
 
 export interface CheckMission {
@@ -83,13 +98,6 @@ export interface Candidate {
 // ----- Candidate Evaluation Domain -----
 
 export type CandidateReportRole = 'PRIMARY_REVIEWER' | 'SECONDARY_REVIEWER' | 'FINAL';
-
-export interface ScorecardCriterion {
-  id: string;
-  label: string;
-  domainName: string;
-  weightPercentage: number; // 0–100
-}
 
 export interface CriterionScore {
   criterionId: string;

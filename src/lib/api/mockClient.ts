@@ -103,6 +103,8 @@ const checkMissions: CheckMission[] = [
     assignedReviewerIds: ['usr_002', 'usr_003'],
     candidateIds: ['cand_001', 'cand_002'],
     technicalTestDetail: {
+      id: 'ttd_001',
+      missionId: 'mis_001',
       domainRatios: [
         {
           domainName: 'Frontend',
@@ -145,6 +147,13 @@ const checkMissions: CheckMission[] = [
           { stackName: 'Architecture', percentage: 30, level: 'CONFIRMÉ' },
         ],
       },
+      scorecardCriteria: [
+        { id: 'crit_001', label: 'Maîtrise React / TypeScript', group: 'PRIMARY', weightPercentage: 30, description: 'Évaluer la connaissance des hooks, patterns React et TypeScript' },
+        { id: 'crit_002', label: 'Architecture & Design Patterns', group: 'PRIMARY', weightPercentage: 25, description: 'Capacité à structurer le code proprement' },
+        { id: 'crit_003', label: 'Qualité du code & Tests', group: 'PRIMARY', weightPercentage: 20, description: 'Tests unitaires, lisibilité, documentation' },
+        { id: 'crit_004', label: 'Git & Versioning', group: 'SECONDARY', weightPercentage: 15, description: 'Maîtrise des workflows Git' },
+        { id: 'crit_005', label: 'Communication & Clarté', group: 'SECONDARY', weightPercentage: 10, description: 'Clarté des explications, documentation' },
+      ],
     },
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-20T14:30:00Z',
@@ -158,6 +167,8 @@ const checkMissions: CheckMission[] = [
     assignedReviewerIds: ['usr_003'],
     candidateIds: ['cand_003'],
     technicalTestDetail: {
+      id: 'ttd_002',
+      missionId: 'mis_002',
       domainRatios: [
         {
           domainName: 'Backend',
@@ -178,6 +189,12 @@ const checkMissions: CheckMission[] = [
             { name: 'API Design', percentage: 40, level: 'SENIOR' },
           ],
         },
+      ],
+      scorecardCriteria: [
+        { id: 'crit_101', label: 'Maîtrise Node.js', group: 'PRIMARY', weightPercentage: 35, description: 'APIs, performances, async' },
+        { id: 'crit_102', label: 'Base de données', group: 'PRIMARY', weightPercentage: 30, description: 'PostgreSQL, optimisation requêtes' },
+        { id: 'crit_103', label: 'Architecture', group: 'PRIMARY', weightPercentage: 20, description: 'Microservices, patterns' },
+        { id: 'crit_104', label: 'Testing', group: 'SECONDARY', weightPercentage: 15, description: 'Tests unitaires et intégration' },
       ],
     },
     createdAt: '2024-01-18T09:00:00Z',
@@ -245,40 +262,7 @@ const candidates: Candidate[] = [
   },
 ];
 
-// ----- Scorecard Criteria -----
-
-const scorecardCriteria: ScorecardCriterion[] = [
-  {
-    id: 'crit_001',
-    label: 'Maîtrise React / TypeScript',
-    domainName: 'Frontend',
-    weightPercentage: 30,
-  },
-  {
-    id: 'crit_002',
-    label: 'Architecture & Design Patterns',
-    domainName: 'Architecture',
-    weightPercentage: 25,
-  },
-  {
-    id: 'crit_003',
-    label: 'Qualité du code & Tests',
-    domainName: 'Qualité',
-    weightPercentage: 20,
-  },
-  {
-    id: 'crit_004',
-    label: 'Communication & Clarté',
-    domainName: 'Soft Skills',
-    weightPercentage: 15,
-  },
-  {
-    id: 'crit_005',
-    label: 'Autonomie & Proactivité',
-    domainName: 'Soft Skills',
-    weightPercentage: 10,
-  },
-];
+// Note: scorecardCriteria are now embedded in TechnicalTestDetail per mission
 
 // ----- Candidate Reports -----
 
@@ -570,13 +554,15 @@ export const mockCheckAdminApi: CheckAdminApi = {
     const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
     const reports = candidateReports.filter(r => r.candidateId === candidateId);
 
+    const scorecardCriteria = mission.technicalTestDetail?.scorecardCriteria ?? [];
+
     return {
       candidate,
       candidateUser,
       mission,
       client: client!,
       reviewers,
-      scorecardCriteria: [...scorecardCriteria],
+      scorecardCriteria,
       reports,
     };
   },
