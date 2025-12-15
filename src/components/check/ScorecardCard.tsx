@@ -1,7 +1,8 @@
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { CriterionGroup, DomainRatio, ScorecardCriterion, SkillLevel, StackEvaluation, TechnicalTestDetail } from '@/lib/types';
+
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import type { TechnicalTestDetail, SkillLevel, StackEvaluation, DomainRatio, ScorecardCriterion, CriterionGroup } from '@/lib/types';
 
 interface ScorecardCardProps {
   technicalTestDetail?: TechnicalTestDetail;
@@ -123,59 +124,45 @@ export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
     );
   }
 
-  const { domainRatios, scoreCard, scorecardCriteria } = technicalTestDetail;
+  const { domainRatios, scorecardCriteria } = technicalTestDetail;
 
   return (
     <Card className="rounded-xl shadow-sm">
       <CardHeader className="p-6 pb-4">
         <CardTitle className="text-lg font-semibold">Scorecard technique</CardTitle>
       </CardHeader>
-      <CardContent className="p-6 pt-0 space-y-6">
-        {/* Domains Section */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Domaines</h3>
-          <div className="space-y-6">
-            {domainRatios.map((domain) => (
-              <DomainSection key={domain.domainName} domain={domain} />
-            ))}
+      <CardContent className="p-6 pt-0">
+        <div className="flex flex-wrap gap-6">
+          {/* Domains Section */}
+          <div className="flex-1 min-w-[300px] space-y-4">
+            <h3 className="font-medium">Domaines</h3>
+            <div className="space-y-6">
+              {domainRatios.map((domain) => (
+                <DomainSection key={domain.domainName} domain={domain} />
+              ))}
+            </div>
           </div>
+
+          {/* Scorecard Criteria - Primary vs Secondary */}
+          {scorecardCriteria && scorecardCriteria.length > 0 && (
+            <>
+              <div className="flex-1 min-w-[300px]">
+                <CriteriaList
+                  criteria={scorecardCriteria}
+                  title="Critères primaires"
+                  group="PRIMARY"
+                />
+              </div>
+              <div className="flex-1 min-w-[300px]">
+                <CriteriaList
+                  criteria={scorecardCriteria}
+                  title="Critères secondaires"
+                  group="SECONDARY"
+                />
+              </div>
+            </>
+          )}
         </div>
-
-        {/* Scorecard Criteria - Primary vs Secondary */}
-        {scorecardCriteria && scorecardCriteria.length > 0 && (
-          <div className="border-t pt-6">
-            <h3 className="font-medium mb-4">Critères d'évaluation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CriteriaList
-                criteria={scorecardCriteria}
-                title="Critères primaires"
-                group="PRIMARY"
-              />
-              <CriteriaList
-                criteria={scorecardCriteria}
-                title="Critères secondaires"
-                group="SECONDARY"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Legacy ScoreCard Evaluations */}
-        {scoreCard && (
-          <div className="border-t pt-6">
-            <h3 className="font-medium mb-4">Évaluations techniques</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <EvaluationList
-                evaluations={scoreCard.primaryEvaluations}
-                title="Primary evaluations"
-              />
-              <EvaluationList
-                evaluations={scoreCard.secondaryEvaluations}
-                title="Secondary evaluations"
-              />
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

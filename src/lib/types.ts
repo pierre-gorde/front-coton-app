@@ -52,11 +52,6 @@ export interface StackEvaluation {
   level: SkillLevel;
 }
 
-export interface ScoreCard {
-  primaryEvaluations: StackEvaluation[];
-  secondaryEvaluations: StackEvaluation[];
-}
-
 export interface ScorecardCriterion {
   id: string;
   label: string;
@@ -79,7 +74,6 @@ export interface TechnicalTestDetail {
   id: string;
   missionId: string;
   domainRatios: DomainRatio[];
-  scoreCard?: ScoreCard;
   scorecardCriteria: ScorecardCriterion[];
 }
 

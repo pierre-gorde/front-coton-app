@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ interface ReviewerEvaluationCardProps {
   report: CandidateReport;
   authorName: string;
   scorecardCriteria: ScorecardCriterion[];
+  onEdit?: () => void;
 }
 
 const roleLabels: Record<string, string> = {
@@ -104,6 +105,7 @@ export function ReviewerEvaluationCard({
   report,
   authorName,
   scorecardCriteria,
+  onEdit,
 }: ReviewerEvaluationCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -115,8 +117,20 @@ export function ReviewerEvaluationCard({
           <span className="font-medium">{authorName}</span>
           <Badge variant="secondary">{roleLabels[report.role] ?? report.role}</Badge>
         </div>
-        <div className={`text-xl font-bold ${getScoreColor(report.finalScore)}`}>
-          {report.finalScore}/100
+        <div className="flex items-center gap-3">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onEdit}
+              className="h-8 w-8"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          <div className={`text-xl font-bold ${getScoreColor(report.finalScore)}`}>
+            {report.finalScore}/100
+          </div>
         </div>
       </div>
 

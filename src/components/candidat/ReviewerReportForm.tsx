@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Save, Loader2, FileEdit } from 'lucide-react';
+import { Save, Loader2, FileEdit, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ interface ReviewerReportFormProps {
   authorName: string;
   scorecardCriteria: ScorecardCriterion[];
   onReportUpdated: (report: CandidateReport) => void;
+  onCancel?: () => void;
 }
 
 const roleLabels: Record<CandidateReportRole, string> = {
@@ -140,6 +141,7 @@ export function ReviewerReportForm({
   authorName,
   scorecardCriteria,
   onReportUpdated,
+  onCancel,
 }: ReviewerReportFormProps) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -222,14 +224,22 @@ export function ReviewerReportForm({
               </div>
               <div className="text-xs text-muted-foreground">Score pondéré</div>
             </div>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
+            <div className="flex items-center gap-2">
+              {onCancel && (
+                <Button onClick={onCancel} variant="outline" disabled={saving}>
+                  <X className="h-4 w-4 mr-2" />
+                  Annuler
+                </Button>
               )}
-              Sauvegarder
-            </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Sauvegarder
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>

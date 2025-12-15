@@ -19,6 +19,7 @@ export default function CandidatDetailPage() {
   const { userId } = useAuth();
   const [data, setData] = useState<CandidateEvaluationView | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!candidatId) return;
@@ -46,6 +47,15 @@ export default function CandidatDetailPage() {
       ...data,
       reports: data.reports.map(r => r.id === updatedReport.id ? updatedReport : r),
     });
+    setEditingReportId(null);
+  };
+
+  const handleEditReport = (reportId: string) => {
+    setEditingReportId(reportId);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReportId(null);
   };
 
   const handleGenerateFinal = async () => {
@@ -192,62 +202,53 @@ export default function CandidatDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Card B: Evaluations par reviewer - Editable */}
+      {/* Card B: Evaluations par reviewer */}
       {reviewers.length > 0 && (
         <Card className="rounded-xl shadow-sm">
           <CardHeader className="p-6 pb-4">
             <CardTitle>Évaluations reviewers</CardTitle>
           </CardHeader>
-          <CardContent className="p-6 pt-0 space-y-4">
-            {reviewers.map((reviewer, index) => {
-              const role = getReviewerRole(index);
-              const report = getReviewerReport(reviewer.id, role);
+          <CardContent className="p-6 pt-0">
+            <div className={editingReportId ? "space-y-4" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
+              {reviewers.map((reviewer, index) => {
+                const role = getReviewerRole(index);
+                const report = getReviewerReport(reviewer.id, role);
 
-              if (report) {
+                if (report) {
+                  const isEditing = editingReportId === report.id;
+
+                  return isEditing ? (
+                    <ReviewerReportForm
+                      key={report.id}
+                      report={report}
+                      authorName={reviewer.name}
+                      scorecardCriteria={scorecardCriteria}
+                      onReportUpdated={handleReportUpdated}
+                      onCancel={handleCancelEdit}
+                    />
+                  ) : (
+                    <ReviewerEvaluationCard
+                      key={report.id}
+                      report={report}
+                      authorName={reviewer.name}
+                      scorecardCriteria={scorecardCriteria}
+                      onEdit={() => handleEditReport(report.id)}
+                    />
+                  );
+                }
+
                 return (
-                  <ReviewerReportForm
-                    key={report.id}
-                    report={report}
-                    authorName={reviewer.name}
+                  <CreateReportButton
+                    key={`create-${reviewer.id}`}
+                    candidateId={candidate.id}
+                    reviewer={reviewer}
+                    role={role}
                     scorecardCriteria={scorecardCriteria}
-                    onReportUpdated={handleReportUpdated}
+                    onReportCreated={handleReportCreated}
                   />
                 );
-              }
-
-              return (
-                <CreateReportButton
-                  key={`create-${reviewer.id}`}
-                  candidateId={candidate.id}
-                  reviewer={reviewer}
-                  role={role}
-                  scorecardCriteria={scorecardCriteria}
-                  onReportCreated={handleReportCreated}
-                />
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Read-only view of completed reports (for reference) */}
-      {reviewerReports.length > 0 && (
-        <Card className="rounded-xl shadow-sm">
-          <CardHeader className="p-6 pb-4">
-            <CardTitle className="text-muted-foreground">Rapports soumis (lecture seule)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 pt-0 space-y-4">
-            {reviewerReports.map(report => {
-              const author = reviewers.find(r => r.id === report.authorUserId);
-              return (
-                <ReviewerEvaluationCard
-                  key={`readonly-${report.id}`}
-                  report={report}
-                  authorName={author?.name ?? 'Reviewer'}
-                  scorecardCriteria={scorecardCriteria}
-                />
-              );
-            })}
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
