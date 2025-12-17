@@ -40,7 +40,9 @@ export default function CheckDetailPage() {
 
     async function loadDetail() {
       setLoading(true);
+
       const data = await getCheckMissionDetail(checkId);
+      
       setDetail(data);
       setLoading(false);
     }

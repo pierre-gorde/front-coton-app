@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listCheckMissions, type CheckMissionWithClient } from '@/lib/services/checkAdminService';
-import type { CheckMissionStatus } from '@/lib/types';
+import { listCheckMissions, listClients, type CheckMissionWithClient } from '@/lib/services/checkAdminService';
+import type { CheckMissionStatus, Client } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { MissionCreateDialog } from '@/components/check/MissionCreateDialog';
 
 const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -41,16 +42,29 @@ const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'defaul
 export default function CheckListPage() {
   const navigate = useNavigate();
   const [missions, setMissions] = useState<CheckMissionWithClient[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
-    listCheckMissions().then((data) => {
-      setMissions(data);
+    Promise.all([
+      listCheckMissions(),
+      listClients(),
+    ]).then(([missionsData, clientsData]) => {
+      setMissions(missionsData);
+      setClients(clientsData);
+    }).finally(() => {
       setLoading(false);
     });
   }, []);
+
+  const handleMissionCreated = async () => {
+    // Refresh missions list
+    const missionsData = await listCheckMissions();
+    setMissions(missionsData);
+  };
 
   const filteredMissions = missions.filter(mission => {
     const clientName = mission.client?.name || '';
@@ -79,7 +93,10 @@ export default function CheckListPage() {
             Gestion des postes et des candidatures
           </p>
         </div>
-        <Button className="gradient-accent text-accent-foreground">
+        <Button
+          className="gradient-accent text-accent-foreground"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nouveau poste
         </Button>
@@ -193,6 +210,14 @@ export default function CheckListPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Mission Dialog */}
+      <MissionCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        clients={clients}
+        onSuccess={handleMissionCreated}
+      />
     </div>
   );
 }

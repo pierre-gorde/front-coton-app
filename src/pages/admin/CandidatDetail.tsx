@@ -1,22 +1,22 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Loader2, User, Briefcase, Building2, Users, ExternalLink, Code2 } from 'lucide-react';
-
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Briefcase, Building2, Code2, ExternalLink, Loader2, User, Users } from 'lucide-react';
+import type { CandidateEvaluationView, CandidateReport, CandidateReportRole } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link, useParams } from 'react-router-dom';
+import { generateFinalReport, getCandidateEvaluationView } from '@/lib/services/checkAdminService';
+import { useCallback, useEffect, useState } from 'react';
+
+import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
-import { getCandidateEvaluationView, generateFinalReport } from '@/lib/services/checkAdminService';
-import { fetchAllPRsWithComments } from '@/lib/services/githubService';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import type { CandidateEvaluationView, CandidateReport, CandidateReportRole } from '@/lib/types';
-import { ReviewerEvaluationCard } from '@/components/candidat/ReviewerEvaluationCard';
-import { ReviewerReportForm } from '@/components/candidat/ReviewerReportForm';
 import { CreateReportButton } from '@/components/candidat/CreateReportButton';
 import { FinalEvaluationCard } from '@/components/candidat/FinalEvaluationCard';
 import { FinalReportForm } from '@/components/candidat/FinalReportForm';
+import { ReviewerEvaluationCard } from '@/components/candidat/ReviewerEvaluationCard';
+import { ReviewerReportForm } from '@/components/candidat/ReviewerReportForm';
+import { fetchAllPRsWithComments } from '@/lib/services/githubService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CandidatDetailPage() {
   const { candidatId } = useParams<{ candidatId: string }>();
@@ -31,7 +31,9 @@ export default function CandidatDetailPage() {
   const loadData = useCallback(async () => {
     if (!candidatId) return;
     setLoading(true);
+
     const result = await getCandidateEvaluationView(candidatId);
+    
     setData(result ?? null);
     setLoading(false);
   }, [candidatId]);

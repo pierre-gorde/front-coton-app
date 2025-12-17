@@ -2,14 +2,15 @@
 // COTON Check > ADMIN - Service Layer
 // ===========================================
 
+import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, ScorecardCriterion, User } from '@/lib/types';
+
+import type { ReportUpdatePayload } from '@/lib/api/contracts';
 import { mockCheckAdminApi } from '@/lib/api/mockClient';
 import { realCheckAdminClient } from '@/lib/api/realClient';
-import type { CheckMission, Client, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, ScorecardCriterion } from '@/lib/types';
-import type { ReportUpdatePayload } from '@/lib/api/contracts';
 
 // Environment toggle: use mock API by default for development
 // Set VITE_USE_MOCK_API=false in .env to use real backend
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
 const apiClient = USE_MOCK_API ? mockCheckAdminApi : realCheckAdminClient;
 
 console.log(`[CheckAdminService] Using ${USE_MOCK_API ? 'MOCK' : 'REAL'} API client`);
@@ -47,7 +48,7 @@ export async function listCheckMissions(): Promise<CheckMissionWithClient[]> {
 
 export async function getCheckMissionDetail(checkId: string): Promise<CheckMissionDetail | null> {
   const mission = await apiClient.getCheckMissionById(checkId);
-  
+
   if (!mission) {
     return null;
   }
@@ -59,7 +60,7 @@ export async function getCheckMissionDetail(checkId: string): Promise<CheckMissi
   ]);
 
   const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
-  
+
   const candidates: CandidateWithUser[] = missionCandidates.map(candidate => ({
     ...candidate,
     user: users.find(u => u.id === candidate.userId),
@@ -71,6 +72,25 @@ export async function getCheckMissionDetail(checkId: string): Promise<CheckMissi
     reviewers,
     candidates,
   };
+}
+
+export async function createCheckMission(
+  title: string,
+  reference: string,
+  clientId: string
+): Promise<CheckMission> {
+  return apiClient.createCheckMission({ title, reference, clientId });
+}
+
+export async function updateCheckMission(
+  id: string,
+  updates: Partial<Omit<CheckMission, 'id'>>
+): Promise<CheckMission> {
+  return apiClient.updateCheckMission(id, updates);
+}
+
+export async function deleteCheckMission(id: string): Promise<void> {
+  return apiClient.deleteCheckMission(id);
 }
 
 // ----- Clients -----
