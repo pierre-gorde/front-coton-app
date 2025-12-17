@@ -461,26 +461,75 @@ Scorecards are auto-generated from mission domain ratios:
 
 **`.env`** (create from `.env.example`):
 ```bash
+# API Backend URL
+VITE_API_URL=http://localhost:3001
+
+# API Mode Toggle (true = mock, false = real backend)
+VITE_USE_MOCK_API=true
+
+# GitHub Personal Access Token
 VITE_GITHUB_TOKEN=ghp_your_token_here
+```
+
+### API Integration
+
+The application supports **two API modes**:
+
+1. **Mock API** (default) - `VITE_USE_MOCK_API=true`
+   - Uses in-memory data from [src/lib/api/mockClient.ts](src/lib/api/mockClient.ts)
+   - Perfect for frontend development without backend
+   - Includes complete sample data (missions, candidates, reports)
+
+2. **Real API** - `VITE_USE_MOCK_API=false`
+   - Connects to actual backend at `VITE_API_URL`
+   - Requires backend server running
+   - Uses [src/lib/api/realClient.ts](src/lib/api/realClient.ts)
+
+**Switching between modes:**
+```typescript
+// src/lib/services/checkAdminService.ts
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
+const apiClient = USE_MOCK_API ? mockCheckAdminApi : realCheckAdminClient;
+```
+
+**Architecture:**
+```
+Components → Service Layer → API Client (Mock OR Real) → Backend
 ```
 
 ### Authentication
 
-Currently **mock authentication** in [src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx):
-- Hardcoded to user "Alice Martin" (usr_001) with ADMIN role
-- No real login flow implemented
+**Magic Link Authentication** - Cookie-based session management:
+- Login: User enters email, receives magic link via email
+- Verify: Click link → backend sets HTTP-only cookie (7 days)
+- Auto-logout: 401 errors trigger automatic redirect to login
+- Session: Cookie automatically included in all API calls (`credentials: 'include'`)
+
+**Key Files:**
+- [src/lib/api/auth.ts](src/lib/api/auth.ts) - Auth API endpoints
+- [src/lib/services/authService.ts](src/lib/services/authService.ts) - Auth business logic
+- [src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx) - Auth state management
+- [src/pages/Login.tsx](src/pages/Login.tsx) - Magic link request page
+- [src/pages/AuthVerify.tsx](src/pages/AuthVerify.tsx) - Token verification page
 
 ## Key Files Reference
 
 | File | Purpose |
 |------|---------|
 | [src/lib/types.ts](src/lib/types.ts) | All domain types - single source of truth |
-| [src/lib/api/contracts.ts](src/lib/api/contracts.ts) | API interface contract |
-| [src/lib/api/mockClient.ts](src/lib/api/mockClient.ts) | Mock implementation with sample data |
-| [src/lib/services/checkAdminService.ts](src/lib/services/checkAdminService.ts) | Service layer for check admin operations |
+| [src/lib/api/contracts.ts](src/lib/api/contracts.ts) | API interface contract (CheckAdminApi) |
+| [src/lib/api/client.ts](src/lib/api/client.ts) | HTTP client with auth (credentials: 'include') |
+| [src/lib/api/mockClient.ts](src/lib/api/mockClient.ts) | Mock API implementation with sample data |
+| [src/lib/api/realClient.ts](src/lib/api/realClient.ts) | Real API implementation (HTTP calls to backend) |
+| [src/lib/api/auth.ts](src/lib/api/auth.ts) | Authentication API endpoints |
+| [src/lib/services/checkAdminService.ts](src/lib/services/checkAdminService.ts) | Service layer with business logic + API toggle |
+| [src/lib/services/authService.ts](src/lib/services/authService.ts) | Auth service layer |
 | [src/lib/services/githubService.ts](src/lib/services/githubService.ts) | GitHub API integration |
 | [src/lib/utils/reportMerge.ts](src/lib/utils/reportMerge.ts) | Report merging algorithms |
 | [src/lib/utils/pdfExport.ts](src/lib/utils/pdfExport.ts) | PDF generation |
+| [src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx) | Auth state management + event listeners |
+| [src/pages/Login.tsx](src/pages/Login.tsx) | Magic link login page |
+| [src/pages/AuthVerify.tsx](src/pages/AuthVerify.tsx) | Magic link verification page |
 | [src/pages/admin/CandidatDetail.tsx](src/pages/admin/CandidatDetail.tsx) | Main evaluation orchestration page |
 | [src/components/candidat/ReviewerReportForm.tsx](src/components/candidat/ReviewerReportForm.tsx) | Form for reviewer evaluation |
 | [src/components/candidat/FinalReportForm.tsx](src/components/candidat/FinalReportForm.tsx) | Form for editing final report |

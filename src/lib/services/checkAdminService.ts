@@ -2,9 +2,17 @@
 // COTON Check > ADMIN - Service Layer
 // ===========================================
 
-import { mockCheckAdminApi } from '@/lib/api/mockClient';
+import { apiClient } from '@/lib/api/mockClient';
+import { realCheckAdminClient } from '@/lib/api/realClient';
 import type { CheckMission, Client, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, ScorecardCriterion } from '@/lib/types';
 import type { ReportUpdatePayload } from '@/lib/api/contracts';
+
+// Environment toggle: use mock API by default for development
+// Set VITE_USE_MOCK_API=false in .env to use real backend
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
+const apiClient = USE_MOCK_API ? apiClient : realCheckAdminClient;
+
+console.log(`[CheckAdminService] Using ${USE_MOCK_API ? 'MOCK' : 'REAL'} API client`);
 
 // ----- Types for enriched data -----
 
@@ -27,8 +35,8 @@ export interface CandidateWithUser extends Candidate {
 
 export async function listCheckMissions(): Promise<CheckMissionWithClient[]> {
   const [missions, clients] = await Promise.all([
-    mockCheckAdminApi.listCheckMissions(),
-    mockCheckAdminApi.listClients(),
+    apiClient.listCheckMissions(),
+    apiClient.listClients(),
   ]);
 
   return missions.map(mission => ({
@@ -38,16 +46,16 @@ export async function listCheckMissions(): Promise<CheckMissionWithClient[]> {
 }
 
 export async function getCheckMissionDetail(checkId: string): Promise<CheckMissionDetail | null> {
-  const mission = await mockCheckAdminApi.getCheckMissionById(checkId);
+  const mission = await apiClient.getCheckMissionById(checkId);
   
   if (!mission) {
     return null;
   }
 
   const [client, users, missionCandidates] = await Promise.all([
-    mockCheckAdminApi.getClientById(mission.clientId),
-    mockCheckAdminApi.listUsers(),
-    mockCheckAdminApi.listCandidatesByMission(checkId),
+    apiClient.getClientById(mission.clientId),
+    apiClient.listUsers(),
+    apiClient.listCandidatesByMission(checkId),
   ]);
 
   const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
@@ -68,23 +76,23 @@ export async function getCheckMissionDetail(checkId: string): Promise<CheckMissi
 // ----- Clients -----
 
 export async function listClients(): Promise<Client[]> {
-  return mockCheckAdminApi.listClients();
+  return apiClient.listClients();
 }
 
 export async function getClientById(id: string): Promise<Client | undefined> {
-  return mockCheckAdminApi.getClientById(id);
+  return apiClient.getClientById(id);
 }
 
 // ----- Candidates -----
 
 export async function getCandidateById(id: string): Promise<CandidateWithUser | null> {
-  const candidate = await mockCheckAdminApi.getCandidateById(id);
+  const candidate = await apiClient.getCandidateById(id);
   
   if (!candidate) {
     return null;
   }
 
-  const user = await mockCheckAdminApi.getUserById(candidate.userId);
+  const user = await apiClient.getUserById(candidate.userId);
 
   return {
     ...candidate,
@@ -95,17 +103,17 @@ export async function getCandidateById(id: string): Promise<CandidateWithUser | 
 // ----- Users -----
 
 export async function listUsers(): Promise<User[]> {
-  return mockCheckAdminApi.listUsers();
+  return apiClient.listUsers();
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {
-  return mockCheckAdminApi.getUserById(id);
+  return apiClient.getUserById(id);
 }
 
 // ----- Candidate Evaluation -----
 
 export async function getCandidateEvaluationView(candidateId: string): Promise<CandidateEvaluationView | undefined> {
-  return mockCheckAdminApi.getCandidateEvaluation(candidateId);
+  return apiClient.getCandidateEvaluation(candidateId);
 }
 
 // ----- Reviewer Reports -----
@@ -120,7 +128,7 @@ export async function getOrCreateReviewerReport(
   scorecardCriteria: ScorecardCriterion[]
 ): Promise<CandidateReport> {
   // Check if report already exists
-  const existingReport = await mockCheckAdminApi.getReportByCandidateAndRole(candidateId, userId, role);
+  const existingReport = await apiClient.getReportByCandidateAndRole(candidateId, userId, role);
   
   if (existingReport) {
     return existingReport;
@@ -133,7 +141,7 @@ export async function getOrCreateReviewerReport(
     comment: '',
   }));
 
-  return mockCheckAdminApi.createReport({
+  return apiClient.createReport({
     candidateId,
     authorUserId: userId,
     role,
@@ -148,7 +156,7 @@ export async function updateReviewerReport(
   reportId: string,
   payload: ReportUpdatePayload
 ): Promise<CandidateReport> {
-  return mockCheckAdminApi.updateReport(reportId, payload);
+  return apiClient.updateReport(reportId, payload);
 }
 
 /**
@@ -158,7 +166,7 @@ export async function updateFinalReport(
   reportId: string,
   payload: ReportUpdatePayload
 ): Promise<CandidateReport> {
-  return mockCheckAdminApi.updateReport(reportId, payload);
+  return apiClient.updateReport(reportId, payload);
 }
 
 /**
@@ -218,7 +226,7 @@ export async function generateFinalReport(
   );
 
   // Upsert FINAL report
-  return mockCheckAdminApi.upsertFinalReport({
+  return apiClient.upsertFinalReport({
     candidateId,
     authorUserId,
     ...mergedData,
