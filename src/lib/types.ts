@@ -12,6 +12,13 @@ export interface User {
   email: string;
   roles: UserRole[];
   githubUsername?: string;
+  // Auth API fields
+  firstName?: string;
+  lastName?: string;
+  role?: 'ADMIN' | 'CLIENT' | 'FREELANCE'; // Single role from API
+  companyId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ----- Client Domain -----

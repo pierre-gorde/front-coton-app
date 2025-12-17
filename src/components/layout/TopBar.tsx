@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Bell, Moon, Sun, User, LogOut, ChevronDown } from 'lucide-react';
+import { AUTH_SUCCESS } from '@/lib/constants/auth';
 import type { UserRole } from '@/lib/types';
 
 const roleLabels: Record<UserRole, string> = {
@@ -27,8 +29,26 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 export function TopBar() {
-  const { currentRole, setCurrentRole, userName } = useAuth();
+  const { currentRole, setCurrentRole, userName, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: 'Succès',
+        description: AUTH_SUCCESS.LOGOUT,
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de se déconnecter',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card/80 backdrop-blur-sm px-6">
@@ -103,7 +123,7 @@ export function TopBar() {
               Profil
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Déconnexion
             </DropdownMenuItem>
