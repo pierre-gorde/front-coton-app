@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - Service Layer
 // ===========================================
 
-import { apiClient } from '@/lib/api/mockClient';
+import { mockCheckAdminApi } from '@/lib/api/mockClient';
 import { realCheckAdminClient } from '@/lib/api/realClient';
 import type { CheckMission, Client, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, ScorecardCriterion } from '@/lib/types';
 import type { ReportUpdatePayload } from '@/lib/api/contracts';
@@ -10,7 +10,7 @@ import type { ReportUpdatePayload } from '@/lib/api/contracts';
 // Environment toggle: use mock API by default for development
 // Set VITE_USE_MOCK_API=false in .env to use real backend
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false';
-const apiClient = USE_MOCK_API ? apiClient : realCheckAdminClient;
+const apiClient = USE_MOCK_API ? mockCheckAdminApi : realCheckAdminClient;
 
 console.log(`[CheckAdminService] Using ${USE_MOCK_API ? 'MOCK' : 'REAL'} API client`);
 
