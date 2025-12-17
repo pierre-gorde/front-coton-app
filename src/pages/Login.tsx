@@ -98,16 +98,28 @@ export default function LoginPage() {
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Button
-                      variant="default"
-                      onClick={() => {
-                        window.open('https://mail.google.com/mail/u/0/#search/from%3A(Collectif+Coton)', '_blank');
-                      }}
-                      className="w-full gradient-accent text-accent-foreground"
-                    >
-                      <Mail className="mr-2 h-4 w-4" />
-                      Ouvrir Gmail
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          window.open('https://mail.google.com/mail/u/0/#search/from%3A(Collectif+Coton)', '_blank');
+                        }}
+                        className="gradient-accent text-accent-foreground"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Gmail
+                      </Button>
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          window.open('https://outlook.live.com/mail/0/inbox', '_blank');
+                        }}
+                        className="gradient-accent text-accent-foreground"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Outlook
+                      </Button>
+                    </div>
                     <Button
                       variant="outline"
                       onClick={() => {
