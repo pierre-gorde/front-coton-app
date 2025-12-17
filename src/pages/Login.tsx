@@ -97,16 +97,28 @@ export default function LoginPage() {
                       Cliquez sur le lien dans l'email pour vous connecter
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEmailSent(false);
-                      setEmail('');
-                    }}
-                    className="w-full"
-                  >
-                    Renvoyer un email
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        window.open('https://mail.google.com/mail/u/0/#search/from%3A(Collectif+Coton)', '_blank');
+                      }}
+                      className="w-full gradient-accent text-accent-foreground"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Ouvrir Gmail
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setEmailSent(false);
+                        setEmail('');
+                      }}
+                      className="w-full"
+                    >
+                      Renvoyer un email
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
