@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, RefreshCw, Loader2, Clock } from 'lucide-react';
+import { Award, RefreshCw, Loader2, Clock, Pencil, FileDown, Code2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -17,12 +17,17 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import type { CandidateReport, ScorecardCriterion, CriterionGroup } from '@/lib/types';
+import { exportFinalReportToPDF } from '@/lib/utils/pdfExport';
 
 interface FinalEvaluationCardProps {
   report: CandidateReport | undefined;
   scorecardCriteria: ScorecardCriterion[];
   hasReviewerReports: boolean;
   onGenerateFinal?: () => Promise<void>;
+  onEdit?: () => void;
+  candidateName?: string;
+  missionTitle?: string;
+  clientName?: string;
 }
 
 function getScoreColor(score: number): string {
@@ -101,11 +106,15 @@ function GroupedScoresTable({ report, scorecardCriteria, group, title }: Grouped
   );
 }
 
-export function FinalEvaluationCard({ 
-  report, 
-  scorecardCriteria, 
+export function FinalEvaluationCard({
+  report,
+  scorecardCriteria,
   hasReviewerReports,
-  onGenerateFinal 
+  onGenerateFinal,
+  onEdit,
+  candidateName = 'Candidat',
+  missionTitle = 'Mission',
+  clientName = 'Client'
 }: FinalEvaluationCardProps) {
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
@@ -130,6 +139,31 @@ export function FinalEvaluationCard({
     }
   };
 
+  const handleExportPDF = () => {
+    if (!report) return;
+
+    try {
+      exportFinalReportToPDF({
+        report,
+        candidateName,
+        missionTitle,
+        clientName,
+        scorecardCriteria,
+      });
+
+      toast({
+        title: 'Export réussi',
+        description: 'Le rapport a été exporté en PDF.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur d\'export',
+        description: error instanceof Error ? error.message : 'Impossible d\'exporter le rapport.',
+      });
+    }
+  };
+
   return (
     <Card className="rounded-xl shadow-sm">
       <CardHeader className="p-6 pb-4">
@@ -138,16 +172,29 @@ export function FinalEvaluationCard({
             <Award className="h-5 w-5" />
             Évaluation finale
           </CardTitle>
-          {hasReviewerReports && onGenerateFinal && (
-            <Button onClick={handleGenerate} disabled={generating} variant="outline">
-              {generating ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              {report ? 'Mettre à jour' : 'Générer'} le rapport final
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {report && (
+              <Button onClick={handleExportPDF} variant="outline" size="sm">
+                <FileDown className="h-4 w-4 mr-2" />
+                Exporter PDF
+              </Button>
+            )}
+            {report && onEdit && (
+              <Button onClick={onEdit} variant="ghost" size="icon">
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {hasReviewerReports && onGenerateFinal && (
+              <Button onClick={handleGenerate} disabled={generating} variant="outline">
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {report ? 'Mettre à jour' : 'Générer'} le rapport final
+              </Button>
+            )}
+          </div>
         </div>
         {report && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
@@ -227,6 +274,50 @@ export function FinalEvaluationCard({
                   group="SECONDARY"
                   title="Critères secondaires"
                 />
+              </div>
+            )}
+
+            {/* PR Review Comments Section (Read-only) */}
+            {report.prReviewComments && report.prReviewComments.length > 0 && (
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <Code2 className="h-4 w-4" />
+                  Code Reviews GitHub ({report.prReviewComments.length})
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Commentaires de code review extraits des PRs du repository
+                </p>
+                <div className="space-y-3">
+                  {report.prReviewComments.map((comment) => (
+                    <div key={comment.id} className="border rounded-lg p-3 space-y-2 bg-muted/20">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <a
+                            href={comment.prUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            PR #{comment.prNumber}: {comment.prTitle}
+                          </a>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {comment.path}:{comment.line} • {new Date(comment.createdAt).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <p className="text-xs whitespace-pre-wrap">{comment.body}</p>
+                      </div>
+                      {comment.code && (
+                        <div className="mt-2">
+                          <pre className="bg-slate-900 text-slate-50 p-2 rounded text-xs overflow-x-auto">
+                            <code>{comment.code}</code>
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

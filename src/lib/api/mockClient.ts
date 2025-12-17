@@ -161,6 +161,7 @@ const users: User[] = [
     name: 'Bob Dupont',
     email: 'bob.dupont@coton.dev',
     roles: ['FREELANCE'],
+    githubUsername: 'xanlucu',
   },
   {
     id: 'usr_003',
@@ -360,6 +361,8 @@ const candidates: Candidate[] = [
     checkMissionId: 'mis_001',
     status: 'EN_COURS',
     githubUsername: 'emmapetit',
+    githubRepoUrl: 'https://github.com/coton-d3v/agregata-api',
+    githubToken: import.meta.env.VITE_GITHUB_TOKEN,
     notes: 'Profil très intéressant, 5 ans XP React',
   },
   {
@@ -368,6 +371,8 @@ const candidates: Candidate[] = [
     checkMissionId: 'mis_001',
     status: 'EN_ATTENTE',
     githubUsername: 'fmoreau-dev',
+    githubRepoUrl: 'https://github.com/coton-d3v/agregata-api',
+    githubToken: import.meta.env.VITE_GITHUB_TOKEN,
     notes: 'À évaluer',
   },
   {
@@ -376,6 +381,8 @@ const candidates: Candidate[] = [
     checkMissionId: 'mis_002',
     status: 'VALIDÉ',
     githubUsername: 'gabriellesimon',
+    githubRepoUrl: 'https://github.com/coton-d3v/agregata-api',
+    githubToken: import.meta.env.VITE_GITHUB_TOKEN,
     notes: 'Excellente candidate, recommandée',
   },
 ];

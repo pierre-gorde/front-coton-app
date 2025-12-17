@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - API Contracts
 // ===========================================
 
-import type { Client, CheckMission, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore } from '@/lib/types';
+import type { Client, CheckMission, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, PRReviewComment } from '@/lib/types';
 
 /**
  * Payload for creating/updating a reviewer report
@@ -13,6 +13,7 @@ export interface ReportUpdatePayload {
   positives: string;
   negatives: string;
   remarks: string;
+  prReviewComments?: PRReviewComment[];
 }
 
 /**

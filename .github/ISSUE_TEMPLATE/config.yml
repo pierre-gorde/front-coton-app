@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & Support
+    url: https://github.com/pierre-gorde/front-coton-app/discussions
+    about: Posez vos questions ou discutez avec la communauté
+  - name: 🔒 Sécurité
+    url: https://github.com/pierre-gorde/front-coton-app/security/policy
+    about: Signaler une vulnérabilité de sécurité (privé)

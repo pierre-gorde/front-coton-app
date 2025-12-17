@@ -152,6 +152,16 @@ export async function updateReviewerReport(
 }
 
 /**
+ * Update a final report. finalScore is recomputed from weighted criterion scores.
+ */
+export async function updateFinalReport(
+  reportId: string,
+  payload: ReportUpdatePayload
+): Promise<CandidateReport> {
+  return mockCheckAdminApi.updateReport(reportId, payload);
+}
+
+/**
  * Compute the weighted final score from criterion scores
  */
 export function computeFinalScore(

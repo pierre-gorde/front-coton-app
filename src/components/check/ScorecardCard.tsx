@@ -134,7 +134,7 @@ export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
       <CardContent className="p-6 pt-0">
         <div className="flex flex-wrap gap-6">
           {/* Domains Section */}
-          <div className="flex-1 min-w-[300px] space-y-4">
+          <div className="flex-1 min-w-[250px] space-y-4">
             <h3 className="font-medium">Domaines</h3>
             <div className="space-y-6">
               {domainRatios.map((domain) => (
@@ -146,14 +146,14 @@ export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
           {/* Scorecard Criteria - Primary vs Secondary */}
           {scorecardCriteria && scorecardCriteria.length > 0 && (
             <>
-              <div className="flex-1 min-w-[300px]">
+              <div className="flex-1 min-w-[250px]">
                 <CriteriaList
                   criteria={scorecardCriteria}
                   title="Critères primaires"
                   group="PRIMARY"
                 />
               </div>
-              <div className="flex-1 min-w-[300px]">
+              <div className="flex-1 min-w-[250px]">
                 <CriteriaList
                   criteria={scorecardCriteria}
                   title="Critères secondaires"

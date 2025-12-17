@@ -11,6 +11,7 @@ export interface User {
   name: string;
   email: string;
   roles: UserRole[];
+  githubUsername?: string;
 }
 
 // ----- Client Domain -----
@@ -96,6 +97,8 @@ export interface Candidate {
   checkMissionId: string;
   status: string;
   githubUsername?: string;
+  githubRepoUrl?: string;
+  githubToken?: string;
   notes?: string;
 }
 
@@ -109,6 +112,18 @@ export interface CriterionScore {
   comment?: string;
 }
 
+export interface PRReviewComment {
+  id: number;
+  body: string;
+  path: string;
+  line: number;
+  createdAt: string;
+  prNumber: number;
+  prTitle: string;
+  prUrl: string;
+  code?: string; // The code snippet associated with the comment
+}
+
 export interface CandidateReport {
   id: string;
   candidateId: string;
@@ -120,6 +135,7 @@ export interface CandidateReport {
   negatives: string; // rich text as string
   remarks: string; // rich text as string
   criterionScores: CriterionScore[];
+  prReviewComments?: PRReviewComment[]; // Code review comments from GitHub PRs
   createdAt: string;
   updatedAt: string;
 }
