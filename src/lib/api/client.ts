@@ -76,7 +76,24 @@ export async function apiCall<T>(
       return null as T;
     }
 
-    return response.json();
+    // Try to parse JSON response
+    const text = await response.text();
+
+    // If response is empty, return null
+    if (!text || text.trim() === '') {
+      console.warn(`Empty response from ${endpoint}`);
+      return null as T;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (jsonError) {
+      console.error('Failed to parse JSON response:', text);
+      throw new ApiError(
+        `Invalid JSON response: ${text.substring(0, 100)}`,
+        response.status
+      );
+    }
   } catch (error) {
     // Network errors
     if (error instanceof TypeError) {
@@ -89,6 +106,7 @@ export async function apiCall<T>(
     }
 
     // Unknown errors
+    console.error('API call error:', error);
     throw new ApiError(AUTH_ERRORS.UNKNOWN_ERROR, 500, error);
   }
 }
