@@ -35,10 +35,10 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
 
-      // Request magic link
-      // The backend will construct the magic link with /auth/verify?token=xxx
-      // We don't pass redirectUrl here because the backend constructs the magic link URL
-      await authService.requestMagicLink(email);
+      // Request magic link with frontend URL
+      // Backend needs to know the frontend URL to construct the magic link
+      const frontendUrl = window.location.origin; // http://localhost:8080
+      await authService.requestMagicLink(email, frontendUrl);
 
       setEmailSent(true);
 
