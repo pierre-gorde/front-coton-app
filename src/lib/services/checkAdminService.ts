@@ -107,7 +107,7 @@ export async function getClientById(id: string): Promise<Client | undefined> {
 
 export async function getCandidateById(id: string): Promise<CandidateWithUser | null> {
   const candidate = await apiClient.getCandidateById(id);
-  
+
   if (!candidate) {
     return null;
   }
@@ -118,6 +118,31 @@ export async function getCandidateById(id: string): Promise<CandidateWithUser | 
     ...candidate,
     user,
   };
+}
+
+export async function createCandidate(
+  user: { name: string; email: string },
+  checkMissionId: string,
+  githubUsername?: string,
+  notes?: string
+): Promise<Candidate> {
+  return apiClient.createCandidate({
+    user,
+    checkMissionId,
+    githubUsername,
+    notes,
+  });
+}
+
+export async function updateCandidate(
+  id: string,
+  updates: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>>
+): Promise<Candidate> {
+  return apiClient.updateCandidate(id, updates);
+}
+
+export async function deleteCandidate(id: string): Promise<void> {
+  return apiClient.deleteCandidate(id);
 }
 
 // ----- Users -----

@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { AlertTriangle, Building2, Calendar, Hash, Loader2 } from 'lucide-react';
+import { AlertTriangle, Building2, Calendar, Hash, Loader2, Plus, Users } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -17,7 +18,10 @@ import {
 } from '@/components/ui/table';
 import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
 import { ScorecardCard } from '@/components/check/ScorecardCard';
-import { getCheckMissionDetail, type CheckMissionDetail } from '@/lib/services/checkAdminService';
+import { CandidateCreateDialog } from '@/components/candidat/CandidateCreateDialog';
+import { ReviewerAssignmentDialog } from '@/components/check/ReviewerAssignmentDialog';
+import { getCheckMissionDetail, listUsers, type CheckMissionDetail } from '@/lib/services/checkAdminService';
+import type { User } from '@/lib/types';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -34,6 +38,9 @@ export default function CheckDetailPage() {
   const navigate = useNavigate();
   const [detail, setDetail] = useState<CheckMissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [candidateDialogOpen, setCandidateDialogOpen] = useState(false);
+  const [reviewerDialogOpen, setReviewerDialogOpen] = useState(false);
+  const [allFreelances, setAllFreelances] = useState<User[]>([]);
 
   useEffect(() => {
     if (!checkId) return;
@@ -41,14 +48,33 @@ export default function CheckDetailPage() {
     async function loadDetail() {
       setLoading(true);
 
-      const data = await getCheckMissionDetail(checkId);
-      
-      setDetail(data);
+      const [missionData, users] = await Promise.all([
+        getCheckMissionDetail(checkId),
+        listUsers(),
+      ]);
+
+      setDetail(missionData);
+      // Filter only freelances
+      setAllFreelances(users.filter(u => u.roles?.includes('FREELANCE') || u.role === 'FREELANCE'));
       setLoading(false);
     }
 
     loadDetail();
   }, [checkId]);
+
+  const handleCandidateCreated = async () => {
+    // Refresh mission detail to show new candidate
+    if (!checkId) return;
+    const data = await getCheckMissionDetail(checkId);
+    setDetail(data);
+  };
+
+  const handleReviewersAssigned = async () => {
+    // Refresh mission detail to show updated reviewers
+    if (!checkId) return;
+    const data = await getCheckMissionDetail(checkId);
+    setDetail(data);
+  };
 
   const breadcrumbItems = [
     { label: 'Dashboard', href: '/dashboard' },
@@ -127,10 +153,18 @@ export default function CheckDetailPage() {
 
       {/* Reviewers Card */}
       <Card className="rounded-xl shadow-sm">
-        <CardHeader className="p-6 pb-4">
+        <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold">
             Reviewers ({reviewers.length})
           </CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setReviewerDialogOpen(true)}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Gérer les reviewers
+          </Button>
         </CardHeader>
         <CardContent className="p-6 pt-0">
           {reviewers.length < 2 && (
@@ -142,7 +176,18 @@ export default function CheckDetailPage() {
             </Alert>
           )}
           {reviewers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun reviewer assigné.</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground mb-4">
+                Aucun reviewer assigné.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setReviewerDialogOpen(true)}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Assigner des reviewers
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -180,14 +225,34 @@ export default function CheckDetailPage() {
 
       {/* Candidates Card */}
       <Card className="rounded-xl shadow-sm">
-        <CardHeader className="p-6 pb-4">
-          <CardTitle className="text-lg font-semibold">
+        <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Users className="h-5 w-5" />
             Candidats ({candidates.length})
           </CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCandidateDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un candidat
+          </Button>
         </CardHeader>
         <CardContent className="p-6 pt-0">
           {candidates.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun candidat pour cette mission.</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground mb-4">
+                Aucun candidat pour cette mission.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setCandidateDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter le premier candidat
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -218,6 +283,27 @@ export default function CheckDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Candidate Create Dialog */}
+      {checkId && (
+        <CandidateCreateDialog
+          open={candidateDialogOpen}
+          onOpenChange={setCandidateDialogOpen}
+          missionId={checkId}
+          onSuccess={handleCandidateCreated}
+        />
+      )}
+
+      {/* Reviewer Assignment Dialog */}
+      {detail && (
+        <ReviewerAssignmentDialog
+          open={reviewerDialogOpen}
+          onOpenChange={setReviewerDialogOpen}
+          mission={detail.mission}
+          allFreelances={allFreelances}
+          onSuccess={handleReviewersAssigned}
+        />
+      )}
     </div>
   );
 }

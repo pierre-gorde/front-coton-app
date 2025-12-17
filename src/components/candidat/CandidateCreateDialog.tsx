@@ -1,0 +1,247 @@
+/**
+ * Candidate Create Dialog
+ * Dialog for creating a new candidate (creates User + Candidate)
+ * Following CLAUDE.md patterns: proper state management, error handling with toasts
+ */
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import type { Candidate } from '@/lib/types';
+
+interface CandidateCreateDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  missionId: string;
+  onSuccess: (candidate: Candidate) => void;
+}
+
+export function CandidateCreateDialog({
+  open,
+  onOpenChange,
+  missionId,
+  onSuccess,
+}: CandidateCreateDialogProps) {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    githubUsername: '',
+    notes: '',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      toast({
+        title: 'Erreur',
+        description: 'Le prénom et le nom sont requis',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      toast({
+        title: 'Erreur',
+        description: "L'email est requis",
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: 'Erreur',
+        description: 'Email invalide',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Import dynamically to avoid circular dependencies
+      const { createCandidate } = await import('@/lib/services/checkAdminService');
+
+      const newCandidate = await createCandidate(
+        {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+        },
+        missionId,
+        formData.githubUsername || undefined,
+        formData.notes || undefined
+      );
+
+      toast({
+        title: 'Succès',
+        description: 'Candidat créé avec succès',
+      });
+
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        githubUsername: '',
+        notes: '',
+      });
+
+      // Call success callback
+      onSuccess(newCandidate);
+
+      // Close dialog
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to create candidate:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer le candidat',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[525px]">
+        <DialogHeader>
+          <DialogTitle>Nouveau candidat</DialogTitle>
+          <DialogDescription>
+            Ajouter un nouveau candidat à évaluer pour ce poste
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 py-4">
+            {/* First Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">
+                  Prénom <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="firstName"
+                  placeholder="Jean"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="space-y-2">
+                <Label htmlFor="lastName">
+                  Nom <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="lastName"
+                  placeholder="Dupont"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="jean.dupont@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={isLoading}
+                required
+              />
+            </div>
+
+            {/* GitHub Username */}
+            <div className="space-y-2">
+              <Label htmlFor="githubUsername">
+                Nom d'utilisateur GitHub <span className="text-muted-foreground">(optionnel)</span>
+              </Label>
+              <Input
+                id="githubUsername"
+                placeholder="jdupont"
+                value={formData.githubUsername}
+                onChange={(e) => setFormData({ ...formData, githubUsername: e.target.value })}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Pour récupérer les code reviews GitHub du candidat
+              </p>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">
+                Notes <span className="text-muted-foreground">(optionnel)</span>
+              </Label>
+              <Textarea
+                id="notes"
+                placeholder="Notes internes sur le candidat..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                disabled={isLoading}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              className="gradient-accent text-accent-foreground"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                'Créer le candidat'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
