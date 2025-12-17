@@ -6,7 +6,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/lib/services/authService';
-import { AUTH_ERRORS } from '@/lib/constants/auth';
 import type { User, UserRole } from '@/lib/types';
 
 interface AuthContextType {
@@ -29,8 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Load user on mount
+  // Load user on mount (only if we might be authenticated)
   useEffect(() => {
+    // Skip loading user if we're on public pages
+    const publicPaths = ['/login', '/auth/verify'];
+    const currentPath = window.location.pathname;
+
+    if (publicPaths.some(path => currentPath.startsWith(path))) {
+      setIsLoading(false);
+      return;
+    }
+
     loadUser();
   }, []);
 
