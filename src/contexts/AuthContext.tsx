@@ -42,6 +42,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
+  // Listen for user refresh event (triggered after login)
+  useEffect(() => {
+    const handleRefreshUser = () => {
+      loadUser();
+    };
+
+    window.addEventListener('auth:refresh', handleRefreshUser);
+    return () => window.removeEventListener('auth:refresh', handleRefreshUser);
+  }, []);
+
   // Listen for unauthorized events from API client
   useEffect(() => {
     const handleUnauthorized = () => {

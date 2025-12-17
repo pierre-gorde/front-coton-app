@@ -37,7 +37,11 @@ export function AuthVerify() {
         setIsVerifying(true);
         const user = await authService.verifyAndLogin(token);
 
+        // Set user in context
         setUser(user);
+
+        // Trigger user refresh to ensure latest data is loaded
+        window.dispatchEvent(new CustomEvent('auth:refresh'));
 
         toast({
           title: 'Succès',
