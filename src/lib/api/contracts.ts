@@ -41,9 +41,8 @@ export interface CheckAdminApi {
   getCheckMissionById(id: string): Promise<CheckMission | undefined>;
 
   createCheckMission(input: {
-    title: string;
-    reference: string;
-    clientId: string;
+    title?: string;
+    clientId?: string;
   }): Promise<CheckMission>;
 
   updateCheckMission(

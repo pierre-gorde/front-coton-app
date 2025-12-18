@@ -1,11 +1,10 @@
 /**
  * Mission Create Dialog
- * Dialog for creating a new check mission
+ * Minimal dialog for creating a new check mission
+ * Auto-generates mission name and redirects to detail page
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,70 +13,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Loader2, Plus } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-import type { Client, CheckMission } from '@/lib/types';
 
 interface MissionCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clients: Client[];
-  onSuccess: (mission: CheckMission) => void;
 }
 
 export function MissionCreateDialog({
   open,
   onOpenChange,
-  clients,
-  onSuccess,
 }: MissionCreateDialogProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    reference: '',
-    clientId: '',
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
-    if (!formData.title.trim()) {
-      toast({
-        title: 'Erreur',
-        description: 'Le titre est requis',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!formData.reference.trim()) {
-      toast({
-        title: 'Erreur',
-        description: 'La référence est requise',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!formData.clientId) {
-      toast({
-        title: 'Erreur',
-        description: 'Le client est requis',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     try {
       setIsLoading(true);
@@ -85,30 +42,25 @@ export function MissionCreateDialog({
       // Import dynamically to avoid circular dependencies
       const { createCheckMission } = await import('@/lib/services/checkAdminService');
 
-      const newMission = await createCheckMission(
-        formData.title,
-        formData.reference,
-        formData.clientId
-      );
+      // Create mission with auto-generated name
+      const newMission = await createCheckMission();
 
       toast({
         title: 'Succès',
-        description: 'Mission créée avec succès',
+        description: 'Poste créé avec succès',
+        variant: 'success',
       });
-
-      // Reset form
-      setFormData({ title: '', reference: '', clientId: '' });
-
-      // Call success callback
-      onSuccess(newMission);
 
       // Close dialog
       onOpenChange(false);
+
+      // Navigate to mission detail page
+      navigate(`/dashboard/admin/check/${newMission.id}`);
     } catch (error) {
       console.error('Failed to create mission:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de créer la mission',
+        description: 'Impossible de créer le poste',
         variant: 'destructive',
       });
     } finally {
@@ -116,93 +68,26 @@ export function MissionCreateDialog({
     }
   };
 
-  const generateReference = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `CHK-${year}${month}-${random}`;
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Nouveau poste</DialogTitle>
           <DialogDescription>
-            Créer un nouveau poste COTON Check pour évaluer des candidats
+            Créer un nouveau poste COTON Check. Vous pourrez ensuite configurer le client, la scorecard et toutes les informations.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">
-                Titre du poste <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="title"
-                placeholder="Ex: Développeur React Senior"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                disabled={isLoading}
-                required
-              />
-            </div>
-
-            {/* Reference */}
-            <div className="space-y-2">
-              <Label htmlFor="reference">
-                Référence <span className="text-destructive">*</span>
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="reference"
-                  placeholder="Ex: CHK-2024-001"
-                  value={formData.reference}
-                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                  disabled={isLoading}
-                  required
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFormData({ ...formData, reference: generateReference() })}
-                  disabled={isLoading}
-                >
-                  Générer
-                </Button>
+          <div className="py-6">
+            <div className="flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Plus className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Un nouveau poste sera créé avec un nom auto-généré
+                </p>
               </div>
-            </div>
-
-            {/* Client */}
-            <div className="space-y-2">
-              <Label htmlFor="client">
-                Client <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={formData.clientId}
-                onValueChange={(value) => setFormData({ ...formData, clientId: value })}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="client">
-                  <SelectValue placeholder="Sélectionner un client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      Aucun client disponible
-                    </div>
-                  ) : (
-                    clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

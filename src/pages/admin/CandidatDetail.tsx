@@ -1,6 +1,6 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Briefcase, Building2, Code2, ExternalLink, Loader2, User, Users } from 'lucide-react';
-import type { CandidateEvaluationView, CandidateReport, CandidateReportRole } from '@/lib/types';
+import { ReportRole, type CandidateEvaluationView, type CandidateReport, type CandidateReportRole } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useParams } from 'react-router-dom';
 import { generateFinalReport, getCandidateEvaluationView } from '@/lib/services/checkAdminService';
@@ -118,7 +118,7 @@ export default function CandidatDetailPage() {
     try {
       const prsWithComments = await fetchAllPRsWithComments(
         candidate.githubRepoUrl,
-        candidate.githubToken,
+        candidateUser.githubUsername,
         'all'
       );
 
@@ -179,7 +179,7 @@ export default function CandidatDetailPage() {
     { label: 'Admin', href: '/dashboard' },
     { label: 'COTON Check', href: '/dashboard/admin/check' },
     { label: mission.title, href: `/dashboard/admin/check/${mission.id}` },
-    { label: candidateUser.name },
+    { label: candidateUser.firstName + ' ' + candidateUser.lastName },
   ];
 
   // Separate reports by role
@@ -190,7 +190,7 @@ export default function CandidatDetailPage() {
   // Get reports for each reviewer with their assigned role
   const getReviewerRole = (reviewerIndex: number): CandidateReportRole => {
     // First reviewer is PRIMARY, second is SECONDARY
-    return reviewerIndex === 0 ? 'PRIMARY_REVIEWER' : 'SECONDARY_REVIEWER';
+    return reviewerIndex === 0 ? ReportRole.PRIMARY_REVIEWER : ReportRole.SECONDARY_REVIEWER;
   };
 
   const getReviewerReport = (reviewerId: string, role: CandidateReportRole): CandidateReport | undefined => {
@@ -212,7 +212,7 @@ export default function CandidatDetailPage() {
         <CardHeader className="p-6 pb-4">
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            {candidateUser.name}
+            {candidateUser.firstName + ' ' + candidateUser.lastName}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-4">
@@ -270,7 +270,7 @@ export default function CandidatDetailPage() {
                   const role = reviewerRolesMap.get(reviewer.id);
                   return (
                     <div key={reviewer.id} className="flex items-center gap-1">
-                      <span className="text-sm">{reviewer.name}</span>
+                      <span className="text-sm">{reviewer.firstName + ' ' + reviewer.lastName}</span>
                       {role && (
                         <Badge variant="outline" className="text-xs">
                           {role}
@@ -337,7 +337,7 @@ export default function CandidatDetailPage() {
                     <ReviewerReportForm
                       key={report.id}
                       report={report}
-                      authorName={reviewer.name}
+                      authorName={reviewer.firstName + ' ' + reviewer.lastName}
                       scorecardCriteria={scorecardCriteria}
                       onReportUpdated={handleReportUpdated}
                       onCancel={handleCancelEdit}
@@ -348,7 +348,7 @@ export default function CandidatDetailPage() {
                     <ReviewerEvaluationCard
                       key={report.id}
                       report={report}
-                      authorName={reviewer.name}
+                      authorName={reviewer.firstName + ' ' + reviewer.lastName}
                       scorecardCriteria={scorecardCriteria}
                       onEdit={() => handleEditReport(report.id)}
                     />
@@ -386,7 +386,7 @@ export default function CandidatDetailPage() {
           hasReviewerReports={hasReviewerReports}
           onGenerateFinal={handleGenerateFinal}
           onEdit={finalReport ? handleEditFinalReport : undefined}
-          candidateName={candidateUser.name}
+          candidateName={candidateUser.firstName + ' ' + candidateUser.lastName}
           missionTitle={mission.title}
           clientName={client.name}
         />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listCheckMissions, listClients, type CheckMissionWithClient } from '@/lib/services/checkAdminService';
-import type { CheckMissionStatus, Client } from '@/lib/types';
+import { listCheckMissions, createCheckMission, type CheckMissionWithClient } from '@/lib/services/checkAdminService';
+import type { CheckMissionStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,10 +28,11 @@ import {
   Building2,
   Users,
   Calendar,
+  Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MissionCreateDialog } from '@/components/check/MissionCreateDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -41,36 +42,53 @@ const statusConfig: Record<CheckMissionStatus, { label: string; variant: 'defaul
 
 export default function CheckListPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [missions, setMissions] = useState<CheckMissionWithClient[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      listCheckMissions(),
-      listClients(),
-    ]).then(([missionsData, clientsData]) => {
+    listCheckMissions().then((missionsData) => {
       setMissions(missionsData);
-      setClients(clientsData);
     }).finally(() => {
       setLoading(false);
     });
   }, []);
 
-  const handleMissionCreated = async () => {
-    // Refresh missions list
-    const missionsData = await listCheckMissions();
-    setMissions(missionsData);
+  const handleCreateMission = async () => {
+    try {
+      setIsCreating(true);
+
+      // Create mission with auto-generated name
+      const newMission = await createCheckMission();
+
+      toast({
+        title: 'Succès',
+        description: 'Poste créé avec succès',
+        variant: 'success',
+      });
+
+      // Navigate to mission detail page
+      navigate(`/dashboard/admin/check/${newMission.id}`);
+    } catch (error) {
+      console.error('Failed to create mission:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer le poste',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const filteredMissions = missions.filter(mission => {
     const clientName = mission.client?.name || '';
     const matchesSearch = mission.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mission.reference.toLowerCase().includes(searchQuery.toLowerCase());
+      mission.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || mission.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -95,10 +113,20 @@ export default function CheckListPage() {
         </div>
         <Button
           className="gradient-accent text-accent-foreground"
-          onClick={() => setCreateDialogOpen(true)}
+          onClick={handleCreateMission}
+          disabled={isCreating}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau poste
+          {isCreating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Création...
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau poste
+            </>
+          )}
         </Button>
       </div>
 
@@ -171,7 +199,7 @@ export default function CheckListPage() {
                     >
                       <TableCell>
                         <span className="font-mono text-sm text-muted-foreground">
-                          {mission.reference}
+                          {mission.id}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -188,7 +216,7 @@ export default function CheckListPage() {
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{mission.candidateIds.length}</span>
+                          <span className="font-medium">{mission.candidates?.length ?? 0}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -210,14 +238,6 @@ export default function CheckListPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Create Mission Dialog */}
-      <MissionCreateDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        clients={clients}
-        onSuccess={handleMissionCreated}
-      />
     </div>
   );
 }

@@ -1,24 +1,81 @@
 // ===========================================
 // COTON Dashboard - Core Types
+// Based on Prisma Schema
 // ===========================================
+
+// ----- Enums -----
+
+export enum RoleEnum {
+  ADMIN = 'ADMIN',
+  CLIENT = 'CLIENT',
+  FREELANCE = 'FREELANCE',
+  CANDIDAT = 'CANDIDAT',
+}
+
+export enum CheckMissionStatus {
+  DRAFT = 'DRAFT',
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+}
+
+export enum CandidateStatus {
+  EN_COURS = 'EN_COURS',
+  EN_ATTENTE = 'EN_ATTENTE',
+  VALIDE = 'VALIDE',
+  REFUSE = 'REFUSE',
+}
+
+export enum ReportRole {
+  PRIMARY_REVIEWER = 'PRIMARY_REVIEWER',
+  SECONDARY_REVIEWER = 'SECONDARY_REVIEWER',
+  FINAL = 'FINAL',
+}
 
 // ----- User Domain -----
 
-export type UserRole = 'ADMIN' | 'FREELANCE' | 'CLIENT' | 'CANDIDAT';
-
 export interface User {
   id: string;
-  name: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  githubUsername?: string | null;
   roles: UserRole[];
-  githubUsername?: string;
-  // Auth API fields
-  firstName?: string;
-  lastName?: string;
-  role?: 'ADMIN' | 'CLIENT' | 'FREELANCE'; // Single role from API
-  companyId?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived?: boolean | null;
+  checkMissionId?: string | null;
+}
+
+export interface Role {
+  id: string;
+  name: RoleEnum;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived: boolean;
+}
+
+export interface UserRole {
+  id: string;
+  userId: string;
+  roleId: string;
+  role: Role;
+  createdAt: string;
+}
+
+export interface MagicLink {
+  id: string;
+  token: string;
+  userId: string;
+  expiresAt: string;
+  createdAt: string;
+  createdBy?: string | null;
+  updatedAt: string;
+  updatedBy?: string | null;
+  archived?: boolean | null;
 }
 
 // ----- Client Domain -----
@@ -26,14 +83,14 @@ export interface User {
 export interface Client {
   id: string;
   name: string;
-  organizationName?: string;
-  contactEmail: string;
-  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived: boolean;
 }
 
 // ----- COTON Check Domain -----
-
-export type CheckMissionStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
 
 export type SkillLevel = 'JUNIOR' | 'CONFIRMÉ' | 'SENIOR' | 'EXPERT';
 
@@ -80,38 +137,49 @@ export interface ScorecardSuggestionRule {
 
 export interface TechnicalTestDetail {
   id: string;
-  missionId: string;
+  checkMissionId: string;
   domainRatios: DomainRatio[];
   scorecardCriteria: ScorecardCriterion[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived: boolean;
 }
 
 export interface CheckMission {
   id: string;
   title: string;
-  reference: string;
-  clientId: string;
+  clientId?: string | null;
   status: CheckMissionStatus;
-  assignedReviewerIds: string[];
-  candidateIds: string[];
+  assignedReviewers?: User[];
+  candidates?: Candidate[];
   technicalTestDetail?: TechnicalTestDetail;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived: boolean;
 }
 
 export interface Candidate {
   id: string;
   userId: string;
   checkMissionId: string;
-  status: string;
-  githubUsername?: string;
-  githubRepoUrl?: string;
-  githubToken?: string;
-  notes?: string;
+  status: CandidateStatus;
+  githubUsername?: string | null;
+  githubRepoUrl?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived: boolean;
 }
 
 // ----- Candidate Evaluation Domain -----
 
-export type CandidateReportRole = 'PRIMARY_REVIEWER' | 'SECONDARY_REVIEWER' | 'FINAL';
+export type CandidateReportRole = ReportRole;
 
 export interface CriterionScore {
   criterionId: string;
@@ -136,15 +204,18 @@ export interface CandidateReport {
   candidateId: string;
   authorUserId: string;
   role: CandidateReportRole;
+  criterionScores: CriterionScore[];
   finalScore: number; // 0–100, weighted global score
   summary: string; // paragraph: avis global vs attentes
-  positives: string; // rich text as string
-  negatives: string; // rich text as string
+  positivePoints: string[]; // Array of positive points
+  negativePoints: string[]; // Array of negative points
   remarks: string; // rich text as string
-  criterionScores: CriterionScore[];
   prReviewComments?: PRReviewComment[]; // Code review comments from GitHub PRs
   createdAt: string;
   updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  archived: boolean;
 }
 
 export interface CandidateEvaluationView {

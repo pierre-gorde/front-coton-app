@@ -522,17 +522,27 @@ export const mockCheckAdminApi: CheckAdminApi = {
   },
 
   async createCheckMission(input: {
-    title: string;
-    reference: string;
-    clientId: string;
+    title?: string;
+    clientId?: string;
   }): Promise<CheckMission> {
     await delay();
     const now = new Date().toISOString();
+
+    // Auto-generate title if not provided
+    const generateMissionTitle = () => {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `Poste ${year}${month}${day}-${random}`;
+    };
+
     const newMission: CheckMission = {
       id: generateMissionId(),
-      title: input.title,
-      reference: input.reference,
-      clientId: input.clientId,
+      title: input.title || generateMissionTitle(),
+      reference: '', // Reference removed as per user request
+      clientId: input.clientId || '',
       status: 'DRAFT',
       assignedReviewerIds: [],
       candidateIds: [],

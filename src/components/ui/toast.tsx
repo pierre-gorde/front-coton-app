@@ -29,6 +29,14 @@ const toastVariants = cva(
       variant: {
         default: "border bg-background text-foreground",
         destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
+        success: "success group border-success bg-success text-success-foreground",
+        warning: "warning group border-warning bg-warning text-warning-foreground",
+        info: "info group border-info bg-info text-info-foreground",
+        error: "error group border-error bg-error text-error-foreground",
+        message: "message group border-message bg-message text-message-foreground",
+        notification: "notification group border-notification bg-notification text-notification-foreground",
+        alert: "alert group border-alert bg-alert text-alert-foreground",
+        confirm: "confirm group border-confirm bg-confirm text-confirm-foreground",
       },
     },
     defaultVariants: {

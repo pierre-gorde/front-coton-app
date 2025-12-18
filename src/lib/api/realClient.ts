@@ -4,17 +4,18 @@
  * Following CLAUDE.md patterns: contract-first design, proper error handling
  */
 
-import { api } from './client';
-import type { CheckAdminApi } from './contracts';
 import type {
-  Client,
-  CheckMission,
-  User,
   Candidate,
   CandidateEvaluationView,
   CandidateReport,
   CandidateReportRole,
+  CheckMission,
+  Client,
+  User,
 } from '@/lib/types';
+
+import type { CheckAdminApi } from './contracts';
+import { api } from './client';
 
 /**
  * Real API Client - makes actual HTTP calls to backend
@@ -29,6 +30,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
 
   async getClientById(id: string): Promise<Client | undefined> {
     try {
+      if(!id) return undefined;
+      
       return await api.get<Client>(`/admin/clients/${id}`);
     } catch (error) {
       // 404 returns undefined instead of throwing
@@ -69,9 +72,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
   }
 
   async createCheckMission(input: {
-    title: string;
-    reference: string;
-    clientId: string;
+    title?: string;
+    clientId?: string;
   }): Promise<CheckMission> {
     return api.post<CheckMission>('/admin/missions', input);
   }

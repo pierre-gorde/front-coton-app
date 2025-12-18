@@ -58,8 +58,8 @@ export async function getCheckMissionDetail(checkId: string): Promise<CheckMissi
     apiClient.listUsers(),
     apiClient.listCandidatesByMission(checkId),
   ]);
-
-  const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
+  
+  const reviewers = users.filter(u => mission.assignedReviewers?.map(r => r.id)?.includes(u.id)) ?? [];
 
   const candidates: CandidateWithUser[] = missionCandidates.map(candidate => ({
     ...candidate,
@@ -75,11 +75,9 @@ export async function getCheckMissionDetail(checkId: string): Promise<CheckMissi
 }
 
 export async function createCheckMission(
-  title: string,
-  reference: string,
-  clientId: string
+  input?: { title?: string; clientId?: string }
 ): Promise<CheckMission> {
-  return apiClient.createCheckMission({ title, reference, clientId });
+  return apiClient.createCheckMission(input || {});
 }
 
 export async function updateCheckMission(

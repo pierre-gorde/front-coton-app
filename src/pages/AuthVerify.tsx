@@ -4,13 +4,14 @@
  * Following CLAUDE.md patterns: error handling with toasts, proper component structure
  */
 
+import { AUTH_ERRORS, AUTH_SUCCESS } from '@/lib/constants/auth';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { Loader2 } from 'lucide-react';
 import { authService } from '@/lib/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { AUTH_ERRORS, AUTH_SUCCESS } from '@/lib/constants/auth';
-import { Loader2 } from 'lucide-react';
 
 export function AuthVerify() {
   const [searchParams] = useSearchParams();
@@ -46,6 +47,7 @@ export function AuthVerify() {
         toast({
           title: 'Succès',
           description: AUTH_SUCCESS.LOGIN_VERIFIED,
+          variant: 'success',
         });
 
         // Redirect to dashboard or specified redirect URL

@@ -4,8 +4,6 @@
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,12 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+import { Button } from '@/components/ui/button';
+import type { Candidate } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { Candidate } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface CandidateCreateDialogProps {
   open: boolean;
@@ -96,6 +97,7 @@ export function CandidateCreateDialog({
       toast({
         title: 'Succès',
         description: 'Candidat créé avec succès',
+        variant: 'success',
       });
 
       // Reset form

@@ -53,13 +53,19 @@ src/
 - **ScorecardCriterion**: Weighted evaluation criteria
 - **PRReviewComment**: GitHub code review comments
 
-### Multi-Reviewer Workflow
+### Mission Creation & Management Workflow
 
-1. **Creation**: Admin creates check mission with assigned reviewers
-2. **Individual Evaluation**: PRIMARY and SECONDARY reviewers independently fill evaluation forms
-3. **Report Merging**: Admin generates FINAL report by merging both reviews (see [Report Merging](#report-merging))
-4. **Display/Edit Modes**: All reports can be viewed (card) or edited (form)
-5. **PDF Export**: Final report can be exported as professional PDF
+1. **Quick Creation**: Admin creates a mission with auto-generated name, then navigates to detail page
+2. **Configuration**: On detail page, admin configures:
+   - Mission title (inline edit)
+   - Client (select existing or create new)
+   - Scorecard criteria
+   - Assigned reviewers
+   - Candidates
+3. **Evaluation**: PRIMARY and SECONDARY reviewers independently fill evaluation forms
+4. **Report Merging**: Admin generates FINAL report by merging both reviews (see [Report Merging](#report-merging))
+5. **Display/Edit Modes**: All reports can be viewed (card) or edited (form)
+6. **PDF Export**: Final report can be exported as professional PDF
 
 ## Coding Patterns & Best Practices
 
@@ -534,6 +540,9 @@ Components → Service Layer → API Client (Mock OR Real) → Backend
 | [src/components/candidat/ReviewerReportForm.tsx](src/components/candidat/ReviewerReportForm.tsx) | Form for reviewer evaluation |
 | [src/components/candidat/FinalReportForm.tsx](src/components/candidat/FinalReportForm.tsx) | Form for editing final report |
 | [src/components/candidat/FinalEvaluationCard.tsx](src/components/candidat/FinalEvaluationCard.tsx) | Display card for final evaluation |
+| [src/components/check/MissionCreateDialog.tsx](src/components/check/MissionCreateDialog.tsx) | Minimal mission creation dialog (auto-generates name) |
+| [src/components/check/MissionHeader.tsx](src/components/check/MissionHeader.tsx) | Mission header with inline editing (title, client) |
+| [src/components/check/ClientSelectCreate.tsx](src/components/check/ClientSelectCreate.tsx) | Combobox for selecting/creating clients |
 
 ## Common Tasks
 

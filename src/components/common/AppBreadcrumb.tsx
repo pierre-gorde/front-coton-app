@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Breadcrumb,
@@ -23,16 +24,18 @@ export function AppBreadcrumb({ items }: AppBreadcrumbProps) {
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((item, index) => (
-          <BreadcrumbItem key={index}>
-            {item.isCurrent || !item.href ? (
-              <BreadcrumbPage>{item.label}</BreadcrumbPage>
-            ) : (
-              <BreadcrumbLink asChild>
-                <Link to={item.href}>{item.label}</Link>
-              </BreadcrumbLink>
-            )}
+          <Fragment key={index}>
+            <BreadcrumbItem>
+              {item.isCurrent || !item.href ? (
+                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link to={item.href}>{item.label}</Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
             {index < items.length - 1 && <BreadcrumbSeparator />}
-          </BreadcrumbItem>
+          </Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>

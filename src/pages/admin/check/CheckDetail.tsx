@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { AlertTriangle, Building2, Calendar, Hash, Loader2, Plus, Users } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AlertTriangle, Loader2, Plus, Users } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,21 +18,14 @@ import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
 import { ScorecardCard } from '@/components/check/ScorecardCard';
 import { CandidateCreateDialog } from '@/components/candidat/CandidateCreateDialog';
 import { ReviewerAssignmentDialog } from '@/components/check/ReviewerAssignmentDialog';
+import { MissionHeader } from '@/components/check/MissionHeader';
 import { getCheckMissionDetail, listUsers, type CheckMissionDetail } from '@/lib/services/checkAdminService';
-import type { User } from '@/lib/types';
-
-const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
-  DRAFT: { label: 'Brouillon', variant: 'secondary' },
-  OPEN: { label: 'Ouvert', variant: 'default' },
-  CLOSED: { label: 'Clôturé', variant: 'outline' },
-};
-
-function formatDate(dateString: string): string {
-  return format(new Date(dateString), 'dd MMM yyyy', { locale: fr });
-}
+import { type User, type CheckMission, RoleEnum } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CheckDetailPage() {
   const { checkId } = useParams<{ checkId: string }>();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [detail, setDetail] = useState<CheckMissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,25 +33,35 @@ export default function CheckDetailPage() {
   const [reviewerDialogOpen, setReviewerDialogOpen] = useState(false);
   const [allFreelances, setAllFreelances] = useState<User[]>([]);
 
-  useEffect(() => {
+  const loadDetail = useCallback(async () => {
+    try {
     if (!checkId) return;
 
-    async function loadDetail() {
-      setLoading(true);
+    setLoading(true);
 
-      const [missionData, users] = await Promise.all([
-        getCheckMissionDetail(checkId),
-        listUsers(),
-      ]);
+    const [missionData, users] = await Promise.all([
+      getCheckMissionDetail(checkId),
+      listUsers(),
+    ]);
 
-      setDetail(missionData);
-      // Filter only freelances
-      setAllFreelances(users.filter(u => u.roles?.includes('FREELANCE') || u.role === 'FREELANCE'));
+    setDetail(missionData);
+    // Filter only freelances
+    setAllFreelances(users.filter(u => u.roles?.some(r => r.role?.name === RoleEnum.FREELANCE)))
+    } catch (error) {
+      console.error('Failed to load detail:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger le poste',
+        variant: 'destructive',
+      });
+    } finally {
       setLoading(false);
     }
+  }, [checkId, toast]);
 
+  useEffect(() => {
     loadDetail();
-  }, [checkId]);
+  }, [loadDetail]);
 
   const handleCandidateCreated = async () => {
     // Refresh mission detail to show new candidate
@@ -71,6 +72,13 @@ export default function CheckDetailPage() {
 
   const handleReviewersAssigned = async () => {
     // Refresh mission detail to show updated reviewers
+    if (!checkId) return;
+    const data = await getCheckMissionDetail(checkId);
+    setDetail(data);
+  };
+
+  const handleMissionUpdate = async (updatedMission: CheckMission) => {
+    // Refresh mission detail to show updated mission
     if (!checkId) return;
     const data = await getCheckMissionDetail(checkId);
     setDetail(data);
@@ -109,50 +117,22 @@ export default function CheckDetailPage() {
   }
 
   const { mission, client, reviewers, candidates } = detail;
-  const statusConfig = statusLabels[mission.status] ?? statusLabels.DRAFT;
 
   return (
     <div className="space-y-6">
       <AppBreadcrumb items={breadcrumbItems} />
 
-      {/* Mission Header Card */}
-      <Card className="rounded-xl shadow-sm">
-        <CardHeader className="p-6 pb-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-xl font-semibold">{mission.title}</CardTitle>
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Hash className="h-4 w-4" />
-                  {mission.reference}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  {formatDate(mission.updatedAt)}
-                </span>
-              </div>
-            </div>
-            <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          {client && (
-            <Link
-              to={`/dashboard/admin/client/${client.id}`}
-              className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-            >
-              <Building2 className="h-4 w-4" />
-              {client.organizationName ?? client.name}
-            </Link>
-          )}
-        </CardContent>
-      </Card>
+      {/* Mission Header and Reviewers - Side by side on large screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Mission Header with Edit Capabilities */}
+        <MissionHeader
+          mission={mission}
+          client={client}
+          onUpdate={handleMissionUpdate}
+        />
 
-      {/* Scorecard Card */}
-      <ScorecardCard technicalTestDetail={mission.technicalTestDetail} />
-
-      {/* Reviewers Card */}
-      <Card className="rounded-xl shadow-sm">
+        {/* Reviewers Card */}
+        <Card className="rounded-xl shadow-sm">
         <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold">
             Reviewers ({reviewers.length})
@@ -204,13 +184,13 @@ export default function CheckDetailPage() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/dashboard/admin/freelance/${reviewer.id}`)}
                   >
-                    <TableCell className="font-medium">{reviewer.name}</TableCell>
+                    <TableCell className="font-medium">{reviewer.firstName} {reviewer.lastName}</TableCell>
                     <TableCell>{reviewer.email}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        {reviewer.roles.map((role) => (
-                          <Badge key={role} variant="outline" className="text-xs">
-                            {role}
+                        {reviewer.roles.map(({role,id}) => (
+                          <Badge key={id} variant="outline" className="text-xs">
+                            {role.name}
                           </Badge>
                         ))}
                       </div>
@@ -222,6 +202,10 @@ export default function CheckDetailPage() {
           )}
         </CardContent>
       </Card>
+      </div>
+
+      {/* Scorecard Card */}
+      <ScorecardCard technicalTestDetail={mission.technicalTestDetail} />
 
       {/* Candidates Card */}
       <Card className="rounded-xl shadow-sm">
@@ -270,7 +254,7 @@ export default function CheckDetailPage() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/dashboard/admin/candidat/${candidate.id}`)}
                   >
-                    <TableCell className="font-medium">{candidate.user?.name ?? '—'}</TableCell>
+                    <TableCell className="font-medium">{candidate.user?.firstName} {candidate.user?.lastName ?? '—'}</TableCell>
                     <TableCell>{candidate.user?.email ?? '—'}</TableCell>
                     <TableCell>{candidate.githubUsername ?? '—'}</TableCell>
                     <TableCell>

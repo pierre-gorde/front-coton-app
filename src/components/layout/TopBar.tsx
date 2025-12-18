@@ -1,7 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
+import { Bell, ChevronDown, LogOut, Moon, Sun, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bell, Moon, Sun, User, LogOut, ChevronDown } from 'lucide-react';
+
 import { AUTH_SUCCESS } from '@/lib/constants/auth';
+import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/lib/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/use-toast';
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: 'Administrateur',
@@ -39,6 +40,7 @@ export function TopBar() {
       toast({
         title: 'Succès',
         description: AUTH_SUCCESS.LOGOUT,
+        variant: 'success',
       });
     } catch (error) {
       console.error('Logout failed:', error);

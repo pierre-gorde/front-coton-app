@@ -3,16 +3,17 @@
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { AUTH_ERRORS, AUTH_SUCCESS } from '@/lib/constants/auth';
+import { ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 import { authService } from '@/lib/services/authService';
-import { AUTH_SUCCESS, AUTH_ERRORS } from '@/lib/constants/auth';
-import { Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -102,7 +103,7 @@ export default function LoginPage() {
                       <Button
                         variant="default"
                         onClick={() => {
-                          window.open('https://mail.google.com/mail/u/0/#search/from%3A(Collectif+Coton)', '_blank');
+                          window.open('https://mail.google.com/mail/u/0/#search/from%3A(Collectif+Coton)');
                         }}
                         className="gradient-accent text-accent-foreground"
                       >
@@ -112,7 +113,7 @@ export default function LoginPage() {
                       <Button
                         variant="default"
                         onClick={() => {
-                          window.open('https://outlook.live.com/mail/0/inbox', '_blank');
+                          window.open('https://outlook.live.com/mail/0/inbox');
                         }}
                         className="gradient-accent text-accent-foreground"
                       >

@@ -4,8 +4,9 @@
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import type { CheckMission, User } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -14,12 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useEffect, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import type { User, CheckMission } from '@/lib/types';
 
 interface ReviewerAssignmentDialogProps {
   open: boolean;
@@ -43,9 +44,9 @@ export function ReviewerAssignmentDialog({
   // Initialize selected reviewers when dialog opens
   useEffect(() => {
     if (open) {
-      setSelectedReviewerIds(mission.assignedReviewerIds);
+      setSelectedReviewerIds(mission.assignedReviewers?.map(r => r.id) ?? []);
     }
-  }, [open, mission.assignedReviewerIds]);
+  }, [open, mission.assignedReviewers]);
 
   const toggleReviewer = (userId: string) => {
     setSelectedReviewerIds(prev =>
@@ -75,12 +76,13 @@ export function ReviewerAssignmentDialog({
       const { updateCheckMission } = await import('@/lib/services/checkAdminService');
 
       const updatedMission = await updateCheckMission(mission.id, {
-        assignedReviewerIds: selectedReviewerIds,
+        assignedReviewers: selectedReviewerIds.map(id => allFreelances.find(f => f.id === id)),
       });
 
       toast({
         title: 'Succès',
         description: 'Reviewers assignés avec succès',
+        variant: 'success',
       });
 
       // Call success callback
@@ -102,7 +104,7 @@ export function ReviewerAssignmentDialog({
 
   const selectedCount = selectedReviewerIds.length;
   const hasChanges = JSON.stringify([...selectedReviewerIds].sort()) !==
-                     JSON.stringify([...mission.assignedReviewerIds].sort());
+                     JSON.stringify([...mission.assignedReviewers?.map(r => r.id) ?? []].sort());
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -153,7 +155,7 @@ export function ReviewerAssignmentDialog({
                         htmlFor={`reviewer-${freelance.id}`}
                         className="text-sm font-medium leading-none cursor-pointer"
                       >
-                        {freelance.name}
+                        {freelance.firstName} {freelance.lastName}
                       </Label>
                       <p className="text-xs text-muted-foreground">
                         {freelance.email}
