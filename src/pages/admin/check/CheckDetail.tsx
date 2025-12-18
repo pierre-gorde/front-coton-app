@@ -205,7 +205,7 @@ export default function CheckDetailPage() {
       </div>
 
       {/* Scorecard Card */}
-      <ScorecardCard technicalTestDetail={mission.technicalTestDetail} />
+      <ScorecardCard mission={mission} onUpdate={handleMissionUpdate} />
 
       {/* Candidates Card */}
       <Card className="rounded-xl shadow-sm">

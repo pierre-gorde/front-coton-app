@@ -1,11 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CriterionGroup, DomainRatio, ScorecardCriterion, SkillLevel, StackEvaluation, TechnicalTestDetail } from '@/lib/types';
+import type { CheckMission, CriterionGroup, DomainRatio, ScorecardCriterion, SkillLevel, StackEvaluation, TechnicalTestDetail } from '@/lib/types';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Pencil, Plus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { ScorecardEditDialog } from './ScorecardEditDialog';
+import { useState } from 'react';
 
 interface ScorecardCardProps {
-  technicalTestDetail?: TechnicalTestDetail;
+  mission: CheckMission;
+  onUpdate: (updatedMission: CheckMission) => void;
 }
 
 const levelColors: Record<SkillLevel, string> = {
@@ -108,29 +113,62 @@ function CriteriaList({ criteria, title, group }: { criteria: ScorecardCriterion
   );
 }
 
-export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
+export function ScorecardCard({ mission, onUpdate }: ScorecardCardProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const technicalTestDetail = mission.technicalTestDetail;
+
   if (!technicalTestDetail) {
     return (
-      <Card className="rounded-xl shadow-sm">
-        <CardHeader className="p-6 pb-4">
-          <CardTitle className="text-lg font-semibold">Scorecard technique</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          <p className="text-sm text-muted-foreground">
-            Aucune scorecard configurée pour ce poste.
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <Card className="rounded-xl shadow-sm">
+          <CardHeader className="p-6 pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold">Scorecard technique</CardTitle>
+              <Button
+                size="sm"
+                onClick={() => setIsEditDialogOpen(true)}
+                className="gradient-accent text-accent-foreground"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Configurer
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 pt-0">
+            <p className="text-sm text-muted-foreground">
+              Aucune scorecard configurée pour ce poste.
+            </p>
+          </CardContent>
+        </Card>
+
+        <ScorecardEditDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          mission={mission}
+          onSuccess={onUpdate}
+        />
+      </>
     );
   }
 
   const { domainRatios, scorecardCriteria } = technicalTestDetail;
 
   return (
-    <Card className="rounded-xl shadow-sm">
-      <CardHeader className="p-6 pb-4">
-        <CardTitle className="text-lg font-semibold">Scorecard technique</CardTitle>
-      </CardHeader>
+    <>
+      <Card className="rounded-xl shadow-sm">
+        <CardHeader className="p-6 pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">Scorecard technique</CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Éditer
+            </Button>
+          </div>
+        </CardHeader>
       <CardContent className="p-6 pt-0">
         <div className="flex flex-wrap gap-6">
           {/* Domains Section */}
@@ -165,5 +203,13 @@ export function ScorecardCard({ technicalTestDetail }: ScorecardCardProps) {
         </div>
       </CardContent>
     </Card>
+
+    <ScorecardEditDialog
+      open={isEditDialogOpen}
+      onOpenChange={setIsEditDialogOpen}
+      mission={mission}
+      onSuccess={onUpdate}
+    />
+    </>
   );
 }
