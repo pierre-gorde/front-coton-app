@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - API Contracts
 // ===========================================
 
-import type { Client, CheckMission, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, PRReviewComment, Scorecard } from '@/lib/types';
+import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, PRReviewComment, Scorecard, User } from '@/lib/types';
 
 /**
  * Payload for creating/updating a reviewer report
@@ -72,10 +72,13 @@ export interface CheckAdminApi {
   getCandidateById(id: string): Promise<Candidate | undefined>;
 
   createCandidate(input: {
-    user: { name: string; email: string };
+    user: {
+      firstName: string;
+      lastName?: string | null;
+      email: string;
+      githubUsername?: string | null;
+    };
     checkMissionId: string;
-    githubUsername?: string;
-    notes?: string;
   }): Promise<Candidate>;
 
   updateCandidate(

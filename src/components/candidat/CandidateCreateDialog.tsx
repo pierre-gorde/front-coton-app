@@ -18,7 +18,6 @@ import type { Candidate } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,10 +38,9 @@ export function CandidateCreateDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
-    lastName: '',
+    lastName: null,
     email: '',
-    githubUsername: '',
-    notes: '',
+    githubUsername: null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,12 +84,12 @@ export function CandidateCreateDialog({
 
       const newCandidate = await createCandidate(
         {
-          name: `${formData.firstName} ${formData.lastName}`,
+          firstName: formData.firstName,
+          lastName: formData.lastName || null,
           email: formData.email,
+          githubUsername: formData.githubUsername || null,
         },
         missionId,
-        formData.githubUsername || undefined,
-        formData.notes || undefined
       );
 
       toast({
@@ -103,10 +101,9 @@ export function CandidateCreateDialog({
       // Reset form
       setFormData({
         firstName: '',
-        lastName: '',
+        lastName: null,
         email: '',
-        githubUsername: '',
-        notes: '',
+        githubUsername: null,
       });
 
       // Call success callback
@@ -156,7 +153,7 @@ export function CandidateCreateDialog({
               {/* Last Name */}
               <div className="space-y-2">
                 <Label htmlFor="lastName">
-                  Nom <span className="text-destructive">*</span>
+                  Nom
                 </Label>
                 <Input
                   id="lastName"
@@ -164,7 +161,6 @@ export function CandidateCreateDialog({
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   disabled={isLoading}
-                  required
                 />
               </div>
             </div>
@@ -196,24 +192,6 @@ export function CandidateCreateDialog({
                 value={formData.githubUsername}
                 onChange={(e) => setFormData({ ...formData, githubUsername: e.target.value })}
                 disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Pour récupérer les code reviews GitHub du candidat
-              </p>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">
-                Notes <span className="text-muted-foreground">(optionnel)</span>
-              </Label>
-              <Textarea
-                id="notes"
-                placeholder="Notes internes sur le candidat..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                disabled={isLoading}
-                rows={3}
               />
             </div>
           </div>

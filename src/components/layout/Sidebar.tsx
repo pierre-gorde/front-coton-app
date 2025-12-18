@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { RoleEnum } from '@/lib/types';
 import {
   LayoutDashboard,
   ClipboardCheck,
@@ -10,6 +11,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Briefcase,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -17,15 +20,51 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
-  roles?: string[];
+  roles: RoleEnum[];
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'COTON Check', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: ['ADMIN'] },
-  { label: 'Clients', href: '/dashboard/admin/clients', icon: Building2, roles: ['ADMIN'] },
-  { label: 'Freelances', href: '/dashboard/admin/freelances', icon: Users, roles: ['ADMIN'] },
-  { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: ['ADMIN'] },
+interface NavGroup {
+  role: RoleEnum;
+  label: string;
+  items: NavItem[];
+}
+
+// Navigation structure grouped by role
+const navGroups: NavGroup[] = [
+  {
+    role: RoleEnum.ADMIN,
+    label: 'Administration',
+    items: [
+      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: [RoleEnum.ADMIN] },
+      { label: 'COTON Check', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
+      { label: 'Clients', href: '/dashboard/admin/clients', icon: Building2, roles: [RoleEnum.ADMIN] },
+      { label: 'Freelances', href: '/dashboard/admin/freelances', icon: Users, roles: [RoleEnum.ADMIN] },
+      { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: [RoleEnum.ADMIN] },
+    ],
+  },
+  {
+    role: RoleEnum.FREELANCE,
+    label: 'Freelance',
+    items: [
+      { label: 'Mes missions', href: '/dashboard/freelance/missions', icon: Briefcase, roles: [RoleEnum.FREELANCE] },
+      { label: 'Mes évaluations', href: '/dashboard/freelance/evaluations', icon: FileText, roles: [RoleEnum.FREELANCE] },
+    ],
+  },
+  {
+    role: RoleEnum.CLIENT,
+    label: 'Client',
+    items: [
+      { label: 'Mes missions', href: '/dashboard/client/missions', icon: Briefcase, roles: [RoleEnum.CLIENT] },
+      { label: 'Candidats', href: '/dashboard/client/candidats', icon: UserCircle, roles: [RoleEnum.CLIENT] },
+    ],
+  },
+  {
+    role: RoleEnum.CANDIDAT,
+    label: 'Candidat',
+    items: [
+      { label: 'Mon évaluation', href: '/dashboard/candidat/evaluation', icon: FileText, roles: [RoleEnum.CANDIDAT] },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -35,10 +74,11 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
-  const { currentRole } = useAuth();
+  const { roles } = useAuth();
 
-  const filteredNavItems = navItems.filter(
-    item => !item.roles || item.roles.includes(currentRole)
+  // Filter groups to only show those matching user's roles
+  const visibleGroups = navGroups.filter(group =>
+    roles.includes(group.role)
   );
 
   return (
@@ -65,29 +105,49 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {filteredNavItems.map(item => {
-          const isActive = location.pathname === item.href || 
-            (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-          const Icon = item.icon;
+      {/* Navigation - Grouped by Role */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {visibleGroups.map((group, groupIndex) => (
+          <div key={group.role}>
+            {/* Group Label */}
+            {!collapsed && (
+              <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-muted/70">
+                {group.label}
+              </div>
+            )}
 
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-              )}
-            >
-              <Icon className="h-5 w-5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
+            {/* Group Items */}
+            <div className="space-y-1 mb-4">
+              {group.items.map(item => {
+                const isActive = location.pathname === item.href ||
+                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        : 'text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Separator between groups (except for last group) */}
+            {!collapsed && groupIndex < visibleGroups.length - 1 && (
+              <div className="my-3 border-t border-sidebar-border" />
+            )}
+          </div>
+        ))}
       </nav>
 
       {/* Settings at bottom */}
@@ -98,6 +158,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
             'text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
           )}
+          title={collapsed ? 'Paramètres' : undefined}
         >
           <Settings className="h-5 w-5 shrink-0" />
           {!collapsed && <span>Paramètres</span>}

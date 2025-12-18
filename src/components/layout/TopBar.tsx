@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { RoleEnum, UserRole } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -16,21 +17,14 @@ import {
 } from '@/components/ui/select';
 
 import { AUTH_SUCCESS } from '@/lib/constants/auth';
+import { Badge } from '../ui/badge';
 import { Button } from '@/components/ui/button';
-import type { UserRole } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 
-const roleLabels: Record<UserRole, string> = {
-  ADMIN: 'Administrateur',
-  FREELANCE: 'Freelance',
-  CANDIDAT: 'Candidat',
-  CLIENT: 'Client',
-};
-
 export function TopBar() {
-  const { currentRole, setCurrentRole, userName, logout } = useAuth();
+  const { roles, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
 
@@ -64,18 +58,11 @@ export function TopBar() {
         {/* Role Switcher (for demo) */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground hidden sm:inline">Rôle :</span>
-          <Select value={currentRole} onValueChange={(v) => setCurrentRole(v as UserRole)}>
-            <SelectTrigger className="w-[140px] h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(roleLabels).map(([role, label]) => (
-                <SelectItem key={role} value={role}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {roles.map(role => (
+            <Badge key={role} variant="outline" className="text-xs">
+              {role}
+            </Badge>
+          ))}
         </div>
 
         {/* Theme Toggle */}
@@ -110,10 +97,10 @@ export function TopBar() {
             <Button variant="ghost" className="h-9 gap-2 px-2">
               <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center">
                 <span className="text-xs font-medium text-primary-foreground">
-                  {userName.split(' ').map(n => n[0]).join('')}
+                  {user?.firstName?.charAt(0)?.toUpperCase()}{user?.lastName?.charAt(0)?.toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm font-medium hidden sm:inline">{userName}</span>
+              <span className="text-sm font-medium hidden sm:inline">{user?.firstName} {user?.lastName}</span>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>

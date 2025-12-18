@@ -136,10 +136,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
   }
 
   async createCandidate(input: {
-    user: { name: string; email: string };
+    user: { firstName: string; lastName: string; email: string; githubUsername?: string | null; };
     checkMissionId: string;
-    githubUsername?: string;
-    notes?: string;
   }): Promise<Candidate> {
     return api.post<Candidate>('/admin/candidates', input);
   }
@@ -199,7 +197,7 @@ export class RealCheckAdminClient implements CheckAdminApi {
   async createReport(input: {
     candidateId: string;
     authorUserId: string;
-    role: CandidateReportRole;
+    role: CandidateReportRole | 'FINAL';
     criterionScores: Array<{ criterionId: string; score: number; comment?: string }>;
     summary?: string;
     positives?: string;

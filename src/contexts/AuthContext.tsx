@@ -3,28 +3,27 @@
  * Following CLAUDE.md patterns: proper error handling, service layer usage
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import type { RoleEnum, User } from '@/lib/types';
+
 import { authService } from '@/lib/services/authService';
-import type { User, UserRole } from '@/lib/types';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  setUser: (user: User | null) => void;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
-  // Legacy props for backward compatibility
-  currentRole: UserRole;
-  setCurrentRole: (role: UserRole) => void;
-  userName: string;
-  userId: string;
+  roles: RoleEnum[];
+  setRoles: (roles: RoleEnum[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [roles, setRoles] = useState<RoleEnum[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -39,13 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    loadUser();
+    refreshUser();
   }, []);
 
   // Listen for user refresh event (triggered after login)
   useEffect(() => {
     const handleRefreshUser = () => {
-      loadUser();
+      refreshUser();
     };
 
     window.addEventListener('auth:refresh', handleRefreshUser);
@@ -64,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, [navigate]);
 
-  const loadUser = async () => {
+  const refreshUser = async (): Promise<void> => {
     try {
       setIsLoading(true);
       const currentUser = await authService.getCurrentUser();
@@ -90,18 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Legacy compatibility props
-  const currentRole: UserRole = user?.role || user?.roles?.[0] || 'ADMIN';
-  const userName = user?.firstName && user?.lastName
-    ? `${user.firstName} ${user.lastName}`
-    : user?.name || '';
-  const userId = user?.id || '';
-
-  const setCurrentRole = (role: UserRole) => {
+  useEffect(() => {
     if (user) {
-      setUser({ ...user, roles: [role] });
+      setRoles(user.roles?.map(r => r.role?.name ?? '') as RoleEnum[]);
     }
-  };
+  }, [user, setRoles]);
 
   return (
     <AuthContext.Provider
@@ -109,13 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
-        setUser,
+        refreshUser,
         logout,
-        // Legacy props
-        currentRole,
-        setCurrentRole,
-        userName,
-        userId,
+        roles,
+        setRoles,
       }}
     >
       {children}

@@ -13,9 +13,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Percent, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { CheckMission, DomainRatio, ExpertiseRatio, ScorecardCriterion, SkillLevel } from '@/lib/types';
+import type { CheckMission, CriterionGroup, DomainRatio, ExpertiseRatio, ScorecardCriterion, SkillLevel } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,6 +89,68 @@ export function ScorecardEditDialog({
 
   const totalPercentage = domainRatios.reduce((sum, d) => sum + d.percentage, 0);
   const isValidTotal = totalPercentage === 100;
+
+  // Normalize domain percentages to 100%
+  const normalizeDomainPercentages = () => {
+    if (totalPercentage === 0) {
+      // If all are 0, distribute equally
+      const equalShare = Math.floor(100 / domainRatios.length);
+      const remainder = 100 - (equalShare * domainRatios.length);
+
+      setDomainRatios(domainRatios.map((domain, index) => ({
+        ...domain,
+        percentage: equalShare + (index === 0 ? remainder : 0)
+      })));
+    } else {
+      // Maintain proportions but scale to 100%
+      const ratio = 100 / totalPercentage;
+      const normalized = domainRatios.map((domain, index) => ({
+        ...domain,
+        percentage: index === domainRatios.length - 1
+          ? 100 - domainRatios.slice(0, -1).reduce((sum, d) => sum + Math.round(d.percentage * ratio), 0)
+          : Math.round(domain.percentage * ratio)
+      }));
+      setDomainRatios(normalized);
+    }
+
+    toast({
+      title: 'Succès',
+      description: 'Les pourcentages ont été normalisés à 100%',
+      variant: 'success',
+    });
+  };
+
+  // Normalize criteria percentages to 100%
+  const normalizeCriteriaPercentages = () => {
+    const totalWeight = generatedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0);
+
+    if (totalWeight === 0) {
+      // If all are 0, distribute equally
+      const equalShare = Math.floor(100 / generatedCriteria.length);
+      const remainder = 100 - (equalShare * generatedCriteria.length);
+
+      setGeneratedCriteria(generatedCriteria.map((criterion, index) => ({
+        ...criterion,
+        weightPercentage: equalShare + (index === 0 ? remainder : 0)
+      })));
+    } else {
+      // Maintain proportions but scale to 100%
+      const ratio = 100 / totalWeight;
+      const normalized = generatedCriteria.map((criterion, index) => ({
+        ...criterion,
+        weightPercentage: index === generatedCriteria.length - 1
+          ? 100 - generatedCriteria.slice(0, -1).reduce((sum, c) => sum + Math.round(c.weightPercentage * ratio), 0)
+          : Math.round(criterion.weightPercentage * ratio)
+      }));
+      setGeneratedCriteria(normalized);
+    }
+
+    toast({
+      title: 'Succès',
+      description: 'Les poids des critères ont été normalisés à 100%',
+      variant: 'success',
+    });
+  };
 
   const addDomain = () => {
     const availableDomains = Object.keys(DOMAIN_TEMPLATES).filter(
@@ -215,11 +277,35 @@ export function ScorecardEditDialog({
     }
   };
 
+  // Add a new criterion
+  const addCriterion = (group: CriterionGroup) => {
+    const newCriterion: ScorecardCriterion = {
+      id: `crit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      label: '',
+      group,
+      weightPercentage: 0,
+      description: '',
+    };
+    setGeneratedCriteria([...generatedCriteria, newCriterion]);
+  };
+
+  // Remove a criterion
+  const removeCriterion = (criterionId: string) => {
+    setGeneratedCriteria(generatedCriteria.filter(c => c.id !== criterionId));
+  };
+
+  // Update a criterion
+  const updateCriterion = (criterionId: string, field: keyof ScorecardCriterion, value: any) => {
+    setGeneratedCriteria(generatedCriteria.map(c =>
+      c.id === criterionId ? { ...c, [field]: value } : c
+    ));
+  };
+
   const handleSave = async () => {
     if (!isValidTotal) {
       toast({
         title: 'Erreur',
-        description: 'Le total des pourcentages doit être égal à 100%',
+        description: 'Le total des pourcentages des domaines doit être égal à 100%',
         variant: 'destructive',
       });
       return;
@@ -228,7 +314,28 @@ export function ScorecardEditDialog({
     if (generatedCriteria.length === 0) {
       toast({
         title: 'Erreur',
-        description: 'Veuillez générer les critères avant de sauvegarder',
+        description: 'Veuillez générer ou ajouter des critères avant de sauvegarder',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const totalCriteriaWeight = generatedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0);
+    if (totalCriteriaWeight !== 100) {
+      toast({
+        title: 'Erreur',
+        description: 'Le total des poids des critères doit être égal à 100%',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if all criteria have labels
+    const hasEmptyLabels = generatedCriteria.some(c => !c.label.trim());
+    if (hasEmptyLabels) {
+      toast({
+        title: 'Erreur',
+        description: 'Tous les critères doivent avoir un nom',
         variant: 'destructive',
       });
       return;
@@ -296,16 +403,28 @@ export function ScorecardEditDialog({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium">Domaines d'évaluation</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addDomain}
-                disabled={domainRatios.length >= 3}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un domaine
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={normalizeDomainPercentages}
+                  disabled={totalPercentage === 100}
+                >
+                  <Percent className="h-4 w-4 mr-2" />
+                  Normaliser à 100%
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addDomain}
+                  disabled={domainRatios.length >= 3}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un domaine
+                </Button>
+              </div>
             </div>
 
             {domainRatios.map((domain, domainIndex) => (
@@ -463,33 +582,119 @@ export function ScorecardEditDialog({
             </Button>
           </div>
 
-          {/* Criteria Preview */}
+          {/* Criteria Editor */}
           {showPreview && generatedCriteria.length > 0 && (
             <div className="space-y-4 border-t pt-4">
-              <h3 className="font-medium">Aperçu des critères générés</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">Critères d'évaluation</h3>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={normalizeCriteriaPercentages}
+                  >
+                    <Percent className="h-4 w-4 mr-2" />
+                    Normaliser à 100%
+                  </Button>
+                </div>
+              </div>
+
+              {/* Criteria Weight Total */}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total des poids:</span>
+                <Badge variant={generatedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0) === 100 ? 'default' : 'destructive'}>
+                  {generatedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0)}%
+                </Badge>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 {/* Primary Criteria */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">CRITÈRES PRIMAIRES</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium text-muted-foreground">CRITÈRES PRIMAIRES</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addCriterion('PRIMARY')}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Ajouter
+                    </Button>
+                  </div>
                   {generatedCriteria
                     .filter((c) => c.group === 'PRIMARY')
                     .map((criterion) => (
-                      <div key={criterion.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                        <span className="text-sm">{criterion.label}</span>
-                        <Badge>{criterion.weightPercentage}%</Badge>
+                      <div key={criterion.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded border">
+                        <Input
+                          placeholder="Nom du critère"
+                          value={criterion.label}
+                          onChange={(e) => updateCriterion(criterion.id, 'label', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={criterion.weightPercentage}
+                          onChange={(e) => updateCriterion(criterion.id, 'weightPercentage', parseInt(e.target.value) || 0)}
+                          className="w-20"
+                        />
+                        <span className="text-xs text-muted-foreground">%</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCriterion(criterion.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     ))}
                 </div>
 
                 {/* Secondary Criteria */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">CRITÈRES SECONDAIRES</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium text-muted-foreground">CRITÈRES SECONDAIRES</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addCriterion('SECONDARY')}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Ajouter
+                    </Button>
+                  </div>
                   {generatedCriteria
                     .filter((c) => c.group === 'SECONDARY')
                     .map((criterion) => (
-                      <div key={criterion.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                        <span className="text-sm">{criterion.label}</span>
-                        <Badge variant="secondary">{criterion.weightPercentage}%</Badge>
+                      <div key={criterion.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded border">
+                        <Input
+                          placeholder="Nom du critère"
+                          value={criterion.label}
+                          onChange={(e) => updateCriterion(criterion.id, 'label', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={criterion.weightPercentage}
+                          onChange={(e) => updateCriterion(criterion.id, 'weightPercentage', parseInt(e.target.value) || 0)}
+                          className="w-20"
+                        />
+                        <span className="text-xs text-muted-foreground">%</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCriterion(criterion.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     ))}
                 </div>
@@ -510,7 +715,7 @@ export function ScorecardEditDialog({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={isLoading || !isValidTotal || generatedCriteria.length === 0}
+            disabled={isLoading}
             className="gradient-accent text-accent-foreground"
           >
             {isLoading ? (

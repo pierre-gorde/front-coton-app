@@ -6,7 +6,7 @@
 
 import { Building2, Calendar, Check, Loader2, Pencil, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CheckMission, Client } from '@/lib/types';
+import type { CheckMission, CheckMissionStatus, Client } from '@/lib/types';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,13 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -34,6 +41,7 @@ export function MissionHeader({ mission, client, onUpdate }: MissionHeaderProps)
   const { toast } = useToast();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingClient, setIsEditingClient] = useState(false);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [editedTitle, setEditedTitle] = useState(mission.title);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -114,6 +122,39 @@ export function MissionHeader({ mission, client, onUpdate }: MissionHeaderProps)
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === mission.status) {
+      setIsEditingStatus(false);
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const { updateCheckMission } = await import('@/lib/services/checkAdminService');
+      const updated = await updateCheckMission(mission.id, {
+        status: newStatus as CheckMissionStatus
+      });
+
+      toast({
+        title: 'Succès',
+        description: 'Statut mis à jour',
+        variant: 'success',
+      });
+
+      onUpdate(updated);
+      setIsEditingStatus(false);
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le statut',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Card className="rounded-xl shadow-sm">
       <CardHeader className="p-6 pb-4">
@@ -173,7 +214,44 @@ export function MissionHeader({ mission, client, onUpdate }: MissionHeaderProps)
               </span>
             </div>
           </div>
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+          <div className="flex items-center gap-2">
+            {isEditingStatus ? (
+              <Select
+                value={mission.status}
+                onValueChange={handleStatusChange}
+                disabled={isSaving}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DRAFT">
+                    <Badge variant="secondary" className="pointer-events-none">
+                      Brouillon
+                    </Badge>
+                  </SelectItem>
+                  <SelectItem value="OPEN">
+                    <Badge variant="default" className="pointer-events-none">
+                      Ouvert
+                    </Badge>
+                  </SelectItem>
+                  <SelectItem value="CLOSED">
+                    <Badge variant="outline" className="pointer-events-none">
+                      Clôturé
+                    </Badge>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div
+                className="cursor-pointer flex items-center gap-1"
+                onClick={() => setIsEditingStatus(true)}
+              >
+                <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+                <Pencil className="h-3 w-3 text-muted-foreground" />
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-0">

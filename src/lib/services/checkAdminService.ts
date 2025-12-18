@@ -5,17 +5,7 @@
 import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, Scorecard, ScorecardCriterion, User } from '@/lib/types';
 
 import type { ReportUpdatePayload } from '@/lib/api/contracts';
-import { mockCheckAdminApi } from '@/lib/api/mockClient';
-import { realCheckAdminClient } from '@/lib/api/realClient';
-
-// Environment toggle: use mock API by default for development
-// Set VITE_USE_MOCK_API=false in .env to use real backend
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
-const apiClient = USE_MOCK_API ? mockCheckAdminApi : realCheckAdminClient;
-
-console.log(`[CheckAdminService] Using ${USE_MOCK_API ? 'MOCK' : 'REAL'} API client`);
-
-// ----- Types for enriched data -----
+import { realCheckAdminClient as apiClient } from '@/lib/api/realClient';
 
 export interface CheckMissionWithClient extends CheckMission {
   client: Client | undefined;
@@ -128,16 +118,18 @@ export async function getCandidateById(id: string): Promise<CandidateWithUser | 
 }
 
 export async function createCandidate(
-  user: { name: string; email: string },
+  input: { firstName: string; lastName?: string | null; email: string;
+    githubUsername?: string | null },
   checkMissionId: string,
-  githubUsername?: string,
-  notes?: string
 ): Promise<Candidate> {
   return apiClient.createCandidate({
-    user,
+    user: {
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      githubUsername: input.githubUsername || undefined,
+    },
     checkMissionId,
-    githubUsername,
-    notes,
   });
 }
 

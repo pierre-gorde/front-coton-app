@@ -219,13 +219,22 @@ export interface CandidateReport {
 }
 
 export interface CandidateEvaluationView {
-  candidate: Candidate;
-  candidateUser: User;
-  mission: CheckMission;
+  candidate: Candidate & {
+    user: User;
+    checkMission: CheckMission & {
+      client: Client;
+    };
+  };
+  user: User;
+  mission: CheckMission & {
+    client: Client;
+    scorecard: Scorecard | null;
+    assignedReviewers: User[];
+  };
   client: Client;
-  reviewers: User[];
-  scorecardCriteria: ScorecardCriterion[];
+  assignedReviewers: User[];
   reports: CandidateReport[];
+  scorecardCriteria: ScorecardCriterion[];
 }
 
 // ----- Dashboard Stats -----

@@ -5,20 +5,19 @@
  */
 
 import { AUTH_ERRORS, AUTH_SUCCESS } from '@/lib/constants/auth';
-import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Loader2 } from 'lucide-react';
 import { authService } from '@/lib/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export function AuthVerify() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { refreshUser } = useAuth();
   const { toast } = useToast();
-  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -35,11 +34,10 @@ export function AuthVerify() {
       }
 
       try {
-        setIsVerifying(true);
         const user = await authService.verifyAndLogin(token);
 
         // Set user in context
-        setUser(user);
+        if(user) refreshUser();
 
         // Trigger user refresh to ensure latest data is loaded
         window.dispatchEvent(new CustomEvent('auth:refresh'));
@@ -63,13 +61,11 @@ export function AuthVerify() {
         });
 
         navigate('/login');
-      } finally {
-        setIsVerifying(false);
       }
     };
 
     verifyToken();
-  }, [searchParams, navigate, setUser, toast]);
+  }, [searchParams, navigate, refreshUser, toast]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted">

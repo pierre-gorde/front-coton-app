@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function CandidatDetailPage() {
   const { candidatId } = useParams<{ candidatId: string }>();
-  const { userId } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [data, setData] = useState<CandidateEvaluationView | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +86,7 @@ export default function CandidatDetailPage() {
 
   const handleGenerateFinal = async () => {
     if (!candidatId) return;
-    const finalReport = await generateFinalReport(candidatId, userId);
+    const finalReport = await generateFinalReport(candidatId, user?.id);
     if (!data) return;
 
     // Update or add the final report
@@ -173,13 +173,13 @@ export default function CandidatDetailPage() {
     );
   }
 
-  const { candidate, candidateUser, mission, client, reviewers, scorecardCriteria, reports } = data;
+  const { candidate, user: candidateUser, mission, client, assignedReviewers: reviewers, scorecardCriteria, reports } = data;
 
   const breadcrumbItems = [
     { label: 'Admin', href: '/dashboard' },
     { label: 'COTON Check', href: '/dashboard/admin/check' },
     { label: mission.title, href: `/dashboard/admin/check/${mission.id}` },
-    { label: candidateUser.firstName + ' ' + candidateUser.lastName },
+    { label: candidateUser?.firstName + ' ' + candidateUser?.lastName },
   ];
 
   // Separate reports by role
@@ -199,7 +199,7 @@ export default function CandidatDetailPage() {
 
   // Map reviewer IDs to their roles based on position
   const reviewerRolesMap = new Map<string, string>();
-  reviewers.forEach((reviewer, index) => {
+  reviewers?.forEach((reviewer, index) => {
     reviewerRolesMap.set(reviewer.id, index === 0 ? 'Primary' : 'Secondary');
   });
 
@@ -212,13 +212,13 @@ export default function CandidatDetailPage() {
         <CardHeader className="p-6 pb-4">
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            {candidateUser.firstName + ' ' + candidateUser.lastName}
+            {candidate?.user?.firstName + ' ' + candidateUser?.lastName}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              {candidateUser.email && (
+              {candidateUser?.email && (
                 <p className="text-sm text-muted-foreground">{candidateUser.email}</p>
               )}
               
@@ -266,11 +266,11 @@ export default function CandidatDetailPage() {
                 <span className="text-muted-foreground">Reviewers:</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {reviewers.map((reviewer, index) => {
+                {reviewers?.map((reviewer, index) => {
                   const role = reviewerRolesMap.get(reviewer.id);
                   return (
                     <div key={reviewer.id} className="flex items-center gap-1">
-                      <span className="text-sm">{reviewer.firstName + ' ' + reviewer.lastName}</span>
+                      <span className="text-sm">{reviewer?.firstName + ' ' + reviewer?.lastName}</span>
                       {role && (
                         <Badge variant="outline" className="text-xs">
                           {role}
@@ -279,7 +279,7 @@ export default function CandidatDetailPage() {
                     </div>
                   );
                 })}
-                {reviewers.length === 0 && (
+                {reviewers?.length === 0 && (
                   <span className="text-sm text-muted-foreground">Aucun reviewer assigné</span>
                 )}
               </div>
@@ -308,7 +308,7 @@ export default function CandidatDetailPage() {
             </div>
           </div>
 
-          {reviewers.length === 0 && scorecardCriteria.length === 0 && (
+          {reviewers?.length === 0 && scorecardCriteria.length === 0 && (
             <Alert>
               <AlertDescription>
                 Aucun reviewer assigné et aucun critère de scorecard configuré pour cette mission.
@@ -319,14 +319,14 @@ export default function CandidatDetailPage() {
       </Card>
 
       {/* Card B: Evaluations par reviewer */}
-      {reviewers.length > 0 && (
+      {reviewers?.length > 0 && (
         <Card className="rounded-xl shadow-sm">
           <CardHeader className="p-6 pb-4">
             <CardTitle>Évaluations reviewers</CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-0">
             <div className={editingReportId ? "space-y-4" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
-              {reviewers.map((reviewer, index) => {
+              {reviewers?.map((reviewer, index) => {
                 const role = getReviewerRole(index);
                 const report = getReviewerReport(reviewer.id, role);
 
@@ -337,7 +337,7 @@ export default function CandidatDetailPage() {
                     <ReviewerReportForm
                       key={report.id}
                       report={report}
-                      authorName={reviewer.firstName + ' ' + reviewer.lastName}
+                      authorName={reviewer?.firstName + ' ' + reviewer?.lastName}
                       scorecardCriteria={scorecardCriteria}
                       onReportUpdated={handleReportUpdated}
                       onCancel={handleCancelEdit}
@@ -348,7 +348,7 @@ export default function CandidatDetailPage() {
                     <ReviewerEvaluationCard
                       key={report.id}
                       report={report}
-                      authorName={reviewer.firstName + ' ' + reviewer.lastName}
+                      authorName={reviewer?.firstName + ' ' + reviewer?.lastName}
                       scorecardCriteria={scorecardCriteria}
                       onEdit={() => handleEditReport(report.id)}
                     />
@@ -386,7 +386,7 @@ export default function CandidatDetailPage() {
           hasReviewerReports={hasReviewerReports}
           onGenerateFinal={handleGenerateFinal}
           onEdit={finalReport ? handleEditFinalReport : undefined}
-          candidateName={candidateUser.firstName + ' ' + candidateUser.lastName}
+          candidateName={candidateUser?.firstName + ' ' + candidateUser?.lastName}
           missionTitle={mission.title}
           clientName={client.name}
         />
