@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Save, Loader2, FileEdit, X, Code2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Save, Loader2, FileEdit, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,18 +17,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import type { CandidateReport, ScorecardCriterion, CriterionScore, CriterionGroup, CandidateReportRole, PRReviewComment, User, Candidate } from '@/lib/types';
+import type { CandidateReport, ScorecardCriterion, CriterionScore, CriterionGroup, CandidateReportRole, PRReviewComment } from '@/lib/types';
 import { updateReviewerReport, computeFinalScore } from '@/lib/services/checkAdminService';
-import { fetchPRCommentsByAuthor } from '@/lib/services/githubService';
+import { PRCommentsSection } from './PRCommentsSection';
 
 interface ReviewerReportFormProps {
   report: CandidateReport;
   authorName: string;
+  candidateId: string;
+  reviewerUserId: string;
   scorecardCriteria: ScorecardCriterion[];
   onReportUpdated: (report: CandidateReport) => void;
   onCancel?: () => void;
-  reviewer?: User;
-  candidate?: Candidate;
 }
 
 const roleLabels: Record<CandidateReportRole, string> = {
@@ -142,15 +142,14 @@ function CriterionGroupForm({
 export function ReviewerReportForm({
   report,
   authorName,
+  candidateId,
+  reviewerUserId,
   scorecardCriteria,
   onReportUpdated,
   onCancel,
-  reviewer,
-  candidate,
 }: ReviewerReportFormProps) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [fetchingComments, setFetchingComments] = useState(false);
 
   // Initialize criterion scores, ensuring all criteria from scorecard are present
   const initializeCriterionScores = (
@@ -163,12 +162,21 @@ export function ReviewerReportForm({
     });
   };
 
+  // Convert positivePoints/negativePoints arrays to strings for textarea
+  const positivePointsToString = (points: string[]): string => {
+    return Array.isArray(points) ? points.join('\n') : points || '';
+  };
+
+  const negativePointsToString = (points: string[]): string => {
+    return Array.isArray(points) ? points.join('\n') : points || '';
+  };
+
   const [criterionScores, setCriterionScores] = useState<CriterionScore[]>(
     initializeCriterionScores(report.criterionScores, scorecardCriteria)
   );
   const [summary, setSummary] = useState(report.summary);
-  const [positives, setPositives] = useState(report.positives);
-  const [negatives, setNegatives] = useState(report.negatives);
+  const [positives, setPositives] = useState(positivePointsToString(report.positivePoints));
+  const [negatives, setNegatives] = useState(negativePointsToString(report.negativePoints));
   const [remarks, setRemarks] = useState(report.remarks);
   const [prReviewComments, setPrReviewComments] = useState<PRReviewComment[]>(report.prReviewComments || []);
 
@@ -198,41 +206,8 @@ export function ReviewerReportForm({
     );
   };
 
-  const handleFetchPRComments = async () => {
-    if (!reviewer?.githubUsername || !candidate?.githubRepoUrl) {
-      toast({
-        variant: 'destructive',
-        title: 'Configuration manquante',
-        description: 'Le reviewer doit avoir un username GitHub et le candidat un repository GitHub.',
-      });
-      return;
-    }
-
-    setFetchingComments(true);
-    try {
-      const comments = await fetchPRCommentsByAuthor(
-        candidate.githubRepoUrl,
-        reviewer.githubUsername,
-        candidate.githubToken,
-        10
-      );
-
-      setPrReviewComments(comments);
-
-      toast({
-        title: 'Commentaires récupérés',
-        description: `${comments.length} commentaire(s) de code review trouvé(s) dans les 10 dernières PRs.`,
-      });
-    } catch (error) {
-      console.error('Error fetching PR comments:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: 'Impossible de récupérer les commentaires GitHub.',
-      });
-    } finally {
-      setFetchingComments(false);
-    }
+  const handleCommentsLoaded = (comments: PRReviewComment[]) => {
+    setPrReviewComments(comments);
   };
 
   const handleSave = async () => {
@@ -284,21 +259,6 @@ export function ReviewerReportForm({
               <div className="text-xs text-muted-foreground">Score pondéré</div>
             </div>
             <div className="flex items-center gap-2">
-              {reviewer?.githubUsername && candidate?.githubRepoUrl && (
-                <Button
-                  onClick={handleFetchPRComments}
-                  disabled={fetchingComments || saving}
-                  variant="outline"
-                  size="sm"
-                >
-                  {fetchingComments ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Code2 className="h-4 w-4 mr-2" />
-                  )}
-                  Récupérer code reviews
-                </Button>
-              )}
               {onCancel && (
                 <Button onClick={onCancel} variant="outline" disabled={saving}>
                   <X className="h-4 w-4 mr-2" />
@@ -391,52 +351,16 @@ export function ReviewerReportForm({
           </div>
         </div>
 
+        <Separator />
+
         {/* PR Review Comments Section */}
-        {prReviewComments.length > 0 && (
-          <div className="space-y-4">
-            <Separator />
-            <div>
-              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                <Code2 className="h-5 w-5" />
-                Code Reviews GitHub ({prReviewComments.length})
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Commentaires de code review extraits des 10 dernières PRs du repository
-              </p>
-              <div className="space-y-4">
-                {prReviewComments.map((comment) => (
-                  <div key={comment.id} className="border rounded-lg p-4 space-y-2 bg-muted/30">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <a
-                          href={comment.prUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-primary hover:underline"
-                        >
-                          PR #{comment.prNumber}: {comment.prTitle}
-                        </a>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {comment.path}:{comment.line} • {new Date(comment.createdAt).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="prose prose-sm max-w-none">
-                      <p className="text-sm whitespace-pre-wrap">{comment.body}</p>
-                    </div>
-                    {comment.code && (
-                      <div className="mt-2">
-                        <pre className="bg-slate-900 text-slate-50 p-3 rounded text-xs overflow-x-auto">
-                          <code>{comment.code}</code>
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <PRCommentsSection
+          candidateId={candidateId}
+          reviewerUserId={reviewerUserId}
+          comments={prReviewComments}
+          onCommentsLoaded={handleCommentsLoaded}
+          disabled={saving}
+        />
       </CardContent>
     </Card>
   );
