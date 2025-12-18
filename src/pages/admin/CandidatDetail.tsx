@@ -370,10 +370,11 @@ export default function CandidatDetailPage() {
 
               {/* Selected Reviewer Report (right) */}
               <div className="lg:col-span-3">
-                {selectedReport && selectedReviewer ? (
+                {selectedReviewer ? (
                   <ReviewerReportSection
                     report={selectedReport}
                     candidateId={candidate.id}
+                    reviewerUserId={selectedReviewer.id}
                     authorName={`${selectedReviewer.firstName} ${selectedReviewer.lastName}`}
                     scorecardCriteria={scorecardCriteria}
                     onReportUpdated={loadData}
@@ -382,9 +383,7 @@ export default function CandidatDetailPage() {
                 ) : (
                   <Alert>
                     <AlertDescription>
-                      {selectedReviewerId
-                        ? 'Ce reviewer n\'a pas encore créé de rapport.'
-                        : 'Sélectionnez un reviewer pour voir son rapport.'}
+                      Sélectionnez un reviewer pour voir son rapport.
                     </AlertDescription>
                   </Alert>
                 )}
