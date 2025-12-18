@@ -6,27 +6,24 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { ExternalLink, GitPullRequest, Loader2, MessageSquare } from 'lucide-react';
+import { GitPullRequest, Loader2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { PRReviewComment } from '@/lib/types';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface PRCommentsSectionProps {
   candidateId: string;
   reviewerUserId: string;
-  comments?: PRReviewComment[];
-  onCommentsLoaded: (comments: PRReviewComment[]) => void;
+  comments?: string;
+  onCommentsLoaded: (comments: string) => void;
   disabled?: boolean;
 }
 
 export function PRCommentsSection({
   candidateId,
   reviewerUserId,
-  comments = [],
+  comments = '',
   onCommentsLoaded,
   disabled = false,
 }: PRCommentsSectionProps) {
@@ -42,13 +39,20 @@ export function PRCommentsSection({
 
       const fetchedComments = await fetchPRCommentsByReviewer(candidateId, reviewerUserId);
 
+      // Convert array of comment objects to formatted string
+      const formattedComments = fetchedComments
+        .map((comment) => {
+          return `PR #${comment.prNumber}: ${comment.prTitle}\n${comment.path}:${comment.line}\n${comment.body}\n`;
+        })
+        .join('\n---\n\n');
+
       toast({
         title: 'Succès',
         description: `${fetchedComments.length} commentaire(s) récupéré(s)`,
         variant: 'success',
       });
 
-      onCommentsLoaded(fetchedComments);
+      onCommentsLoaded(formattedComments);
     } catch (error) {
       console.error('Failed to fetch PR comments:', error);
       toast({
@@ -64,17 +68,10 @@ export function PRCommentsSection({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <Label htmlFor="prComments" className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">
-            Commentaires PR GitHub
-            {comments.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {comments.length}
-              </Badge>
-            )}
-          </span>
-        </div>
+          <span className="text-sm font-medium">Commentaires PR GitHub</span>
+        </Label>
         <Button
           size="sm"
           variant="outline"
@@ -95,7 +92,7 @@ export function PRCommentsSection({
         </Button>
       </div>
 
-      {comments.length === 0 ? (
+      {!comments ? (
         <Alert>
           <MessageSquare className="h-4 w-4" />
           <AlertDescription>
@@ -103,49 +100,14 @@ export function PRCommentsSection({
           </AlertDescription>
         </Alert>
       ) : (
-        <div className="space-y-3">
-          {comments.map((comment) => (
-            <Card key={comment.id} className="p-4">
-              <div className="space-y-2">
-                {/* PR Info Header */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <GitPullRequest className="h-4 w-4 text-muted-foreground" />
-                    <a
-                      href={comment.prUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium hover:underline flex items-center gap-1"
-                    >
-                      #{comment.prNumber}: {comment.prTitle}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {format(new Date(comment.createdAt), 'dd MMM yyyy', { locale: fr })}
-                  </span>
-                </div>
-
-                {/* File Path */}
-                <div className="text-xs text-muted-foreground font-mono">
-                  {comment.path}:{comment.line}
-                </div>
-
-                {/* Code Context (if available) */}
-                {comment.code && (
-                  <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-                    <code>{comment.code}</code>
-                  </pre>
-                )}
-
-                {/* Comment Body */}
-                <div className="text-sm whitespace-pre-wrap border-l-2 border-primary pl-3">
-                  {comment.body}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <Textarea
+          id="prComments"
+          value={comments}
+          readOnly
+          rows={8}
+          className="font-mono text-xs"
+          placeholder="Les commentaires PR apparaîtront ici..."
+        />
       )}
     </div>
   );

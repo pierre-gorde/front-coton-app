@@ -1,4 +1,4 @@
-import type { CandidateReport, CandidateReportRole, CriterionGroup, CriterionScore, PRReviewComment, ScorecardCriterion } from '@/lib/types';
+import type { CandidateReport, CandidateReportRole, CriterionGroup, CriterionScore, ScorecardCriterion } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileEdit, Loader2, Save, X } from 'lucide-react';
 import {
@@ -162,15 +162,6 @@ export function ReviewerReportForm({
     });
   };
 
-  // Convert positivePoints/negativePoints arrays to strings for textarea
-  const positivePointsToString = (points: string[]): string => {
-    return Array.isArray(points) ? points.join('\n') : points || '';
-  };
-
-  const negativePointsToString = (points: string[]): string => {
-    return Array.isArray(points) ? points.join('\n') : points || '';
-  };
-
   const [criterionScores, setCriterionScores] = useState<CriterionScore[]>(
     initializeCriterionScores(report.criterionScores, scorecardCriteria)
   );
@@ -206,8 +197,8 @@ export function ReviewerReportForm({
     );
   };
 
-  const handleCommentsLoaded = (comments: PRReviewComment[]) => {
-    setPrReviewComments(comments.join('\n'));
+  const handleCommentsLoaded = (comments: string) => {
+    setPrReviewComments(comments);
   };
 
   const handleSave = async () => {
