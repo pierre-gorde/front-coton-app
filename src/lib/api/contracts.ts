@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - API Contracts
 // ===========================================
 
-import type { Client, CheckMission, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, PRReviewComment } from '@/lib/types';
+import type { Client, CheckMission, User, Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CriterionScore, PRReviewComment, Scorecard } from '@/lib/types';
 
 /**
  * Payload for creating/updating a reviewer report
@@ -51,6 +51,13 @@ export interface CheckAdminApi {
   ): Promise<CheckMission>;
 
   deleteCheckMission(id: string): Promise<void>;
+
+  // ----- Scorecard -----
+
+  upsertScorecard(
+    missionId: string,
+    scorecard: Scorecard
+  ): Promise<CheckMission>;
 
   // ----- Users -----
 

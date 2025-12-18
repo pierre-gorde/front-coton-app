@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CheckMission, CriterionGroup, DomainRatio, ScorecardCriterion, SkillLevel, StackEvaluation, TechnicalTestDetail } from '@/lib/types';
+import type { CheckMission, CriterionGroup, DomainRatio, ScorecardCriterion, SkillLevel, StackEvaluation, Scorecard } from '@/lib/types';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -115,9 +115,9 @@ function CriteriaList({ criteria, title, group }: { criteria: ScorecardCriterion
 
 export function ScorecardCard({ mission, onUpdate }: ScorecardCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const technicalTestDetail = mission.technicalTestDetail;
+  const scorecard = mission.scorecard;
 
-  if (!technicalTestDetail) {
+  if (!scorecard) {
     return (
       <>
         <Card className="rounded-xl shadow-sm">
@@ -151,7 +151,7 @@ export function ScorecardCard({ mission, onUpdate }: ScorecardCardProps) {
     );
   }
 
-  const { domainRatios, scorecardCriteria } = technicalTestDetail;
+  const { domainRatios, scorecardCriteria } = scorecard;
 
   return (
     <>

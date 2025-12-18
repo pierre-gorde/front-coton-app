@@ -11,6 +11,7 @@ import type {
   CandidateReportRole,
   CheckMission,
   Client,
+  Scorecard,
   User,
 } from '@/lib/types';
 
@@ -87,6 +88,15 @@ export class RealCheckAdminClient implements CheckAdminApi {
 
   async deleteCheckMission(id: string): Promise<void> {
     return api.delete<void>(`/admin/missions/${id}`);
+  }
+
+  // ----- Scorecard -----
+
+  async upsertScorecard(
+    missionId: string,
+    scorecard: Scorecard
+  ): Promise<CheckMission> {
+    return api.post<CheckMission>(`/admin/missions/${missionId}/scorecard`, scorecard);
   }
 
   // ----- Users -----

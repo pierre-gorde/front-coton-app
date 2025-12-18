@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - Service Layer
 // ===========================================
 
-import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, ScorecardCriterion, User } from '@/lib/types';
+import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, Scorecard, ScorecardCriterion, User } from '@/lib/types';
 
 import type { ReportUpdatePayload } from '@/lib/api/contracts';
 import { mockCheckAdminApi } from '@/lib/api/mockClient';
@@ -89,6 +89,15 @@ export async function updateCheckMission(
 
 export async function deleteCheckMission(id: string): Promise<void> {
   return apiClient.deleteCheckMission(id);
+}
+
+// ----- Scorecard -----
+
+export async function upsertScorecard(
+  missionId: string,
+  scorecard: Scorecard
+): Promise<CheckMission> {
+  return apiClient.upsertScorecard(missionId, scorecard);
 }
 
 // ----- Clients -----

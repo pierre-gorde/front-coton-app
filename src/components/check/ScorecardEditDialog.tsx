@@ -80,12 +80,12 @@ export function ScorecardEditDialog({
 
   // Initialize with existing data if available
   useEffect(() => {
-    if (open && mission.technicalTestDetail?.domainRatios) {
-      setDomainRatios(mission.technicalTestDetail.domainRatios);
-      setGeneratedCriteria(mission.technicalTestDetail.scorecardCriteria || []);
+    if (open && mission.scorecard?.domainRatios) {
+      setDomainRatios(mission.scorecard.domainRatios);
+      setGeneratedCriteria(mission.scorecard.scorecardCriteria || []);
       setShowPreview(true);
     }
-  }, [open, mission.technicalTestDetail]);
+  }, [open, mission.scorecard]);
 
   const totalPercentage = domainRatios.reduce((sum, d) => sum + d.percentage, 0);
   const isValidTotal = totalPercentage === 100;
@@ -237,19 +237,19 @@ export function ScorecardEditDialog({
     try {
       setIsLoading(true);
 
-      const { updateCheckMission } = await import('@/lib/services/checkAdminService');
+      const { upsertScorecard } = await import('@/lib/services/checkAdminService');
 
-      const updatedMission = await updateCheckMission(mission.id, {
-        technicalTestDetail: {
-          id: mission.technicalTestDetail?.id || `ttd_${Date.now()}`,
-          checkMissionId: mission.id,
-          domainRatios: domainRatios as DomainRatio[],
-          scorecardCriteria: generatedCriteria,
-          createdAt: mission.technicalTestDetail?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          archived: false,
-        },
-      });
+      const scorecardData = {
+        id: mission.scorecard?.id || `sc_${Date.now()}`,
+        checkMissionId: mission.id,
+        domainRatios: domainRatios as DomainRatio[],
+        scorecardCriteria: generatedCriteria,
+        createdAt: mission.scorecard?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false,
+      };
+
+      const updatedMission = await upsertScorecard(mission.id, scorecardData);
 
       toast({
         title: 'Succès',

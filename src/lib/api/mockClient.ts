@@ -2,7 +2,7 @@
 // COTON Check > ADMIN - Mock API Implementation
 // ===========================================
 
-import type { User, Client, CheckMission, Candidate, ScorecardCriterion, CandidateReport, CandidateEvaluationView, ScorecardSuggestionRule, DomainRatio, ExpertiseLevel, CriterionGroup, CandidateReportRole, CriterionScore } from '@/lib/types';
+import type { User, Client, CheckMission, Candidate, Scorecard, ScorecardCriterion, CandidateReport, CandidateEvaluationView, ScorecardSuggestionRule, DomainRatio, ExpertiseLevel, CriterionGroup, CandidateReportRole, CriterionScore } from '@/lib/types';
 import type { CheckAdminApi, ReportUpdatePayload } from './contracts';
 
 // Simulate network delay
@@ -281,23 +281,14 @@ const checkMissions: CheckMission[] = [
     status: 'OPEN',
     assignedReviewerIds: ['usr_002', 'usr_003'],
     candidateIds: ['cand_001', 'cand_002'],
-    technicalTestDetail: {
-      id: 'ttd_001',
-      missionId: 'mis_001',
+    scorecard: {
+      id: 'sc_001',
+      checkMissionId: 'mis_001',
       domainRatios: mis001DomainRatios,
-      scoreCard: {
-        primaryEvaluations: [
-          { stackName: 'React', percentage: 40, level: 'SENIOR' },
-          { stackName: 'TypeScript', percentage: 35, level: 'CONFIRMÉ' },
-          { stackName: 'Node.js', percentage: 25, level: 'CONFIRMÉ' },
-        ],
-        secondaryEvaluations: [
-          { stackName: 'Testing', percentage: 30, level: 'CONFIRMÉ' },
-          { stackName: 'Git', percentage: 40, level: 'SENIOR' },
-          { stackName: 'Architecture', percentage: 30, level: 'CONFIRMÉ' },
-        ],
-      },
       scorecardCriteria: generateScorecardCriteria(mis001DomainRatios),
+      createdAt: '2024-01-15T10:00:00Z',
+      updatedAt: '2024-01-20T14:30:00Z',
+      archived: false,
     },
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-20T14:30:00Z',
@@ -310,11 +301,14 @@ const checkMissions: CheckMission[] = [
     status: 'OPEN',
     assignedReviewerIds: ['usr_003'],
     candidateIds: ['cand_003'],
-    technicalTestDetail: {
-      id: 'ttd_002',
-      missionId: 'mis_002',
+    scorecard: {
+      id: 'sc_002',
+      checkMissionId: 'mis_002',
       domainRatios: mis002DomainRatios,
       scorecardCriteria: generateScorecardCriteria(mis002DomainRatios),
+      createdAt: '2024-01-18T09:00:00Z',
+      updatedAt: '2024-01-22T11:00:00Z',
+      archived: false,
     },
     createdAt: '2024-01-18T09:00:00Z',
     updatedAt: '2024-01-22T11:00:00Z',
@@ -387,15 +381,15 @@ const candidates: Candidate[] = [
   },
 ];
 
-// Note: scorecardCriteria are now embedded in TechnicalTestDetail per mission
+// Note: scorecardCriteria are now embedded in Scorecard per mission
 
 // ----- Candidate Reports -----
-// Reports reference criteria from the mission's technicalTestDetail.scorecardCriteria
+// Reports reference criteria from the mission's scorecard.scorecardCriteria
 // We need to build these after missions are initialized
 
 function buildCandidateReports(): CandidateReport[] {
   // Get criteria IDs from mis_001 (candidate cand_001 is on this mission)
-  const mis001Criteria = checkMissions[0].technicalTestDetail?.scorecardCriteria ?? [];
+  const mis001Criteria = checkMissions[0].scorecard?.scorecardCriteria ?? [];
   
   // Map scores to the generated criteria (in order)
   const getScoresForMis001 = (scores: number[], comments: string[]) => {
@@ -579,6 +573,25 @@ export const mockCheckAdminApi: CheckAdminApi = {
     checkMissions.splice(index, 1);
   },
 
+  // ----- Scorecard -----
+
+  async upsertScorecard(missionId: string, scorecard: Scorecard): Promise<CheckMission> {
+    await delay();
+    const mission = checkMissions.find(m => m.id === missionId);
+    if (!mission) {
+      throw new Error(`CheckMission with id ${missionId} not found`);
+    }
+
+    // Update or create scorecard
+    mission.scorecard = {
+      ...scorecard,
+      checkMissionId: missionId,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return this.enrichMissionWithRelations(mission);
+  },
+
   // ----- Users -----
 
   async listUsers(): Promise<User[]> {
@@ -698,7 +711,7 @@ export const mockCheckAdminApi: CheckAdminApi = {
     const reviewers = users.filter(u => mission.assignedReviewerIds.includes(u.id));
     const reports = candidateReports.filter(r => r.candidateId === candidateId);
 
-    const scorecardCriteria = mission.technicalTestDetail?.scorecardCriteria ?? [];
+    const scorecardCriteria = mission.scorecard?.scorecardCriteria ?? [];
 
     return {
       candidate,
@@ -760,7 +773,7 @@ export const mockCheckAdminApi: CheckAdminApi = {
     // Compute weighted finalScore
     const candidate = candidates.find(c => c.id === candidateReports[index].candidateId);
     const mission = checkMissions.find(m => m.id === candidate?.checkMissionId);
-    const scorecardCriteria = mission?.technicalTestDetail?.scorecardCriteria ?? [];
+    const scorecardCriteria = mission?.scorecard?.scorecardCriteria ?? [];
 
     let totalWeight = 0;
     let weightedSum = 0;

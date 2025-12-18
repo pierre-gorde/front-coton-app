@@ -135,7 +135,7 @@ export interface ScorecardSuggestionRule {
   }>;
 }
 
-export interface TechnicalTestDetail {
+export interface Scorecard {
   id: string;
   checkMissionId: string;
   domainRatios: DomainRatio[];
@@ -154,7 +154,7 @@ export interface CheckMission {
   status: CheckMissionStatus;
   assignedReviewers?: User[];
   candidates?: Candidate[];
-  technicalTestDetail?: TechnicalTestDetail;
+  scorecard?: Scorecard;
   createdAt: string;
   updatedAt: string;
   createdBy?: string | null;
