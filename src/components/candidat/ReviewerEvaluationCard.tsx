@@ -1,10 +1,5 @@
 import type { CandidateReport, CriterionGroup, ScorecardCriterion } from '@/lib/types';
-import { ChevronDown, ChevronRight, Pencil } from 'lucide-react';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -16,7 +11,6 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 
 interface ReviewerEvaluationCardProps {
   report: CandidateReport;
@@ -107,8 +101,6 @@ export function ReviewerEvaluationCard({
   scorecardCriteria,
   onEdit,
 }: ReviewerEvaluationCardProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
     <div className="border rounded-lg p-4 space-y-3">
       {/* Header */}
@@ -137,67 +129,55 @@ export function ReviewerEvaluationCard({
       {/* Summary */}
       <p className="text-sm text-muted-foreground">{report.summary}</p>
 
-      {/* Collapsible details */}
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            {isOpen ? (
-              <ChevronDown className="h-4 w-4 mr-2" />
-            ) : (
-              <ChevronRight className="h-4 w-4 mr-2" />
-            )}
-            Voir les détails
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 pt-3">
-          {/* Positifs */}
-          <div>
-            <h4 className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">
-              Points positifs
-            </h4>
-            <p className="text-sm whitespace-pre-line text-muted-foreground">
-              {report.positivePoints}
-            </p>
-          </div>
+      {/* Details - always visible */}
+      <div className="space-y-4 pt-3">
+        {/* Positifs */}
+        <div>
+          <h4 className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">
+            Points positifs
+          </h4>
+          <p className="text-sm whitespace-pre-line text-muted-foreground">
+            {report.positivePoints}
+          </p>
+        </div>
 
-          {/* Négatifs */}
-          <div>
-            <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-1">
-              Points négatifs
-            </h4>
-            <p className="text-sm whitespace-pre-line text-muted-foreground">
-              {report.negativePoints}
-            </p>
-          </div>
+        {/* Négatifs */}
+        <div>
+          <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-1">
+            Points négatifs
+          </h4>
+          <p className="text-sm whitespace-pre-line text-muted-foreground">
+            {report.negativePoints}
+          </p>
+        </div>
 
-          {/* Remarques */}
-          <div>
-            <h4 className="text-sm font-medium mb-1">Remarques</h4>
-            <p className="text-sm whitespace-pre-line text-muted-foreground">
-              {report.remarks}
-            </p>
-          </div>
+        {/* Remarques */}
+        <div>
+          <h4 className="text-sm font-medium mb-1">Remarques</h4>
+          <p className="text-sm whitespace-pre-line text-muted-foreground">
+            {report.remarks}
+          </p>
+        </div>
 
-          {/* Criterion Scores by Group */}
-          {report.criterionScores.length > 0 && (
-            <div className="space-y-4 pt-2">
-              <h4 className="text-sm font-medium">Scores par critère</h4>
-              <GroupedScoresTable
-                report={report}
-                scorecardCriteria={scorecardCriteria}
-                group="PRIMARY"
-                title="Critères primaires"
-              />
-              <GroupedScoresTable
-                report={report}
-                scorecardCriteria={scorecardCriteria}
-                group="SECONDARY"
-                title="Critères secondaires"
-              />
-            </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
+        {/* Criterion Scores by Group */}
+        {report.criterionScores.length > 0 && (
+          <div className="space-y-4 pt-2">
+            <h4 className="text-sm font-medium">Scores par critère</h4>
+            <GroupedScoresTable
+              report={report}
+              scorecardCriteria={scorecardCriteria}
+              group="PRIMARY"
+              title="Critères primaires"
+            />
+            <GroupedScoresTable
+              report={report}
+              scorecardCriteria={scorecardCriteria}
+              group="SECONDARY"
+              title="Critères secondaires"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
