@@ -1,159 +1,122 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Briefcase, Building2, Code2, ExternalLink, Loader2, User, Users } from 'lucide-react';
-import { ReportRole, type CandidateEvaluationView, type CandidateReport, type CandidateReportRole } from '@/lib/types';
+/**
+ * Candidate Detail Page
+ * Displays candidate evaluation with tab structure: Reviewer Reports + Final Report
+ * Following CLAUDE.md patterns: proper state management, error handling
+ */
+
+import { Alert, AlertDescription, AlertTriangle } from '@/components/ui/alert';
+import { Briefcase, Building2, ExternalLink, FileText, GitPullRequest, Loader2, User as UserIcon, UserMinus, UserPlus, Users } from 'lucide-react';
+import { type CandidateEvaluationView } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useParams } from 'react-router-dom';
-import { generateFinalReport, getCandidateEvaluationView } from '@/lib/services/checkAdminService';
+import { getCandidateEvaluationView } from '@/lib/services/checkAdminService';
+import { inviteCandidateToRepo, excludeCandidateFromRepo } from '@/lib/services/githubService';
 import { useCallback, useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CreateReportButton } from '@/components/candidat/CreateReportButton';
-import { FinalEvaluationCard } from '@/components/candidat/FinalEvaluationCard';
-import { FinalReportForm } from '@/components/candidat/FinalReportForm';
-import { ReviewerEvaluationCard } from '@/components/candidat/ReviewerEvaluationCard';
-import { ReviewerReportForm } from '@/components/candidat/ReviewerReportForm';
-import { fetchAllPRsWithComments } from '@/lib/services/githubService';
+import { ReviewerSideMenu } from '@/components/candidat/ReviewerSideMenu';
+import { ReviewerReportSection } from '@/components/candidat/ReviewerReportSection';
+import { FinalReportSection } from '@/components/candidat/FinalReportSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { RoleEnum } from '@/lib/types';
 
 export default function CandidatDetailPage() {
   const { candidatId } = useParams<{ candidatId: string }>();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const { toast } = useToast();
   const [data, setData] = useState<CandidateEvaluationView | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editingReportId, setEditingReportId] = useState<string | null>(null);
-  const [editingFinalReport, setEditingFinalReport] = useState(false);
-  const [fetchingPRs, setFetchingPRs] = useState(false);
+  const [activeTab, setActiveTab] = useState<'reviewers' | 'final'>('reviewers');
+  const [selectedReviewerId, setSelectedReviewerId] = useState<string | null>(null);
+  const [invitingGithub, setInvitingGithub] = useState(false);
+  const [excludingGithub, setExcludingGithub] = useState(false);
+
+  const isAdmin = roles.includes(RoleEnum.ADMIN);
+  const isReviewer = roles.includes(RoleEnum.FREELANCE);
 
   const loadData = useCallback(async () => {
     if (!candidatId) return;
     setLoading(true);
 
-    const result = await getCandidateEvaluationView(candidatId);
-    
-    setData(result ?? null);
-    setLoading(false);
-  }, [candidatId]);
+    try {
+      const result = await getCandidateEvaluationView(candidatId);
+      setData(result ?? null);
+
+      // Auto-select first reviewer or current user if reviewer
+      if (result) {
+        if (isReviewer && !isAdmin) {
+          // Reviewer sees only their own report
+          setSelectedReviewerId(user?.id || null);
+        } else if (result.assignedReviewers.length > 0) {
+          // Admin/others see first reviewer by default
+          setSelectedReviewerId(result.assignedReviewers[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load candidate data:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les données du candidat',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [candidatId, isAdmin, isReviewer, user?.id, toast]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleReportCreated = (newReport: CandidateReport) => {
-    if (!data) return;
-    setData({
-      ...data,
-      reports: [...data.reports, newReport],
-    });
-  };
-
-  const handleReportUpdated = (updatedReport: CandidateReport) => {
-    if (!data) return;
-    setData({
-      ...data,
-      reports: data.reports.map(r => r.id === updatedReport.id ? updatedReport : r),
-    });
-    setEditingReportId(null);
-  };
-
-  const handleEditReport = (reportId: string) => {
-    setEditingReportId(reportId);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingReportId(null);
-  };
-
-  const handleEditFinalReport = () => {
-    setEditingFinalReport(true);
-  };
-
-  const handleCancelFinalEdit = () => {
-    setEditingFinalReport(false);
-  };
-
-  const handleFinalReportUpdated = (updatedReport: CandidateReport) => {
-    if (!data) return;
-    setData({
-      ...data,
-      reports: data.reports.map(r => r.role === 'FINAL' ? updatedReport : r),
-    });
-    setEditingFinalReport(false);
-  };
-
-  const handleGenerateFinal = async () => {
+  const handleInviteToGithub = async () => {
     if (!candidatId) return;
-    const finalReport = await generateFinalReport(candidatId, user?.id);
-    if (!data) return;
 
-    // Update or add the final report
-    const existingIndex = data.reports.findIndex(r => r.role === 'FINAL');
-    if (existingIndex !== -1) {
-      setData({
-        ...data,
-        reports: data.reports.map(r => r.role === 'FINAL' ? finalReport : r),
-      });
-    } else {
-      setData({
-        ...data,
-        reports: [...data.reports, finalReport],
-      });
-    }
-  };
-
-  const handleFetchPRComments = async () => {
-    if (!candidate.githubRepoUrl) {
-      toast({
-        title: "Erreur",
-        description: "Aucun repository GitHub lié à ce candidat",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setFetchingPRs(true);
     try {
-      const prsWithComments = await fetchAllPRsWithComments(
-        candidate.githubRepoUrl,
-        candidateUser.githubUsername,
-        'all'
-      );
-
-      // Get last 10 PRs (sorted by most recent)
-      const last10PRs = prsWithComments
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 10);
-
-      // Console log all review comments
-      console.log('=== Last 10 PRs with Review Comments ===');
-      last10PRs.forEach((pr) => {
-        console.log(`\nPR #${pr.number}: ${pr.title}`);
-        console.log(`URL: ${pr.html_url}`);
-        console.log(`State: ${pr.state}`);
-        console.log(`Review Comments (${pr.review_comments.length}):`);
-        pr.review_comments.forEach((comment) => {
-          console.log(`  - [${comment.user.login}] ${comment.path}:${comment.line}`);
-          console.log(`    ${comment.body}`);
-          console.log(`    ${comment.html_url}`);
-        });
-      });
+      setInvitingGithub(true);
+      await inviteCandidateToRepo(candidatId);
 
       toast({
-        title: "Succès",
-        description: `${last10PRs.length} PRs récupérées. Voir la console pour les détails.`,
+        title: 'Succès',
+        description: 'Invitation envoyée au candidat',
+        variant: 'success',
       });
     } catch (error) {
-      console.error('Error fetching PR comments:', error);
+      console.error('Failed to invite candidate:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de récupérer les PRs et commentaires",
-        variant: "destructive",
+        title: 'Erreur',
+        description: 'Impossible d\'inviter le candidat au repository',
+        variant: 'destructive',
       });
     } finally {
-      setFetchingPRs(false);
+      setInvitingGithub(false);
+    }
+  };
+
+  const handleExcludeFromGithub = async () => {
+    if (!candidatId) return;
+
+    try {
+      setExcludingGithub(true);
+      await excludeCandidateFromRepo(candidatId);
+
+      toast({
+        title: 'Succès',
+        description: 'Candidat retiré du repository',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Failed to exclude candidate:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de retirer le candidat du repository',
+        variant: 'destructive',
+      });
+    } finally {
+      setExcludingGithub(false);
     }
   };
 
@@ -173,55 +136,54 @@ export default function CandidatDetailPage() {
     );
   }
 
-  const { candidate, user: candidateUser, mission, client, assignedReviewers: reviewers, scorecardCriteria, reports } = data;
+  const { candidate, user: candidateUser, mission, client, assignedReviewers, scorecardCriteria, reports } = data;
 
   const breadcrumbItems = [
     { label: 'Admin', href: '/dashboard' },
     { label: 'COTON Check', href: '/dashboard/admin/check' },
     { label: mission.title, href: `/dashboard/admin/check/${mission.id}` },
-    { label: candidateUser?.firstName + ' ' + candidateUser?.lastName },
+    { label: `${candidateUser?.firstName} ${candidateUser?.lastName}`, isCurrent: true },
   ];
 
   // Separate reports by role
   const finalReport = reports.find(r => r.role === 'FINAL');
-  const reviewerReports = reports.filter(r => r.role === 'PRIMARY_REVIEWER' || r.role === 'SECONDARY_REVIEWER');
-  const hasReviewerReports = reviewerReports.length > 0;
+  const reviewerReports = reports.filter(r => r.role !== 'FINAL');
 
-  // Get reports for each reviewer with their assigned role
-  const getReviewerRole = (reviewerIndex: number): CandidateReportRole => {
-    // First reviewer is PRIMARY, second is SECONDARY
-    return reviewerIndex === 0 ? ReportRole.PRIMARY_REVIEWER : ReportRole.SECONDARY_REVIEWER;
-  };
+  // Get selected reviewer's report
+  const selectedReport = selectedReviewerId
+    ? reports.find(r => r.authorUserId === selectedReviewerId && r.role !== 'FINAL')
+    : undefined;
 
-  const getReviewerReport = (reviewerId: string, role: CandidateReportRole): CandidateReport | undefined => {
-    return reports.find(r => r.authorUserId === reviewerId && r.role === role);
-  };
+  const selectedReviewer = selectedReviewerId
+    ? assignedReviewers.find(r => r.id === selectedReviewerId)
+    : undefined;
 
-  // Map reviewer IDs to their roles based on position
-  const reviewerRolesMap = new Map<string, string>();
-  reviewers?.forEach((reviewer, index) => {
-    reviewerRolesMap.set(reviewer.id, index === 0 ? 'Primary' : 'Secondary');
-  });
+  // Check if current user can edit reports
+  const canEditReports = isAdmin || (isReviewer && user?.id === selectedReviewerId);
+
+  // Filter reviewers if not admin (show only self)
+  const visibleReviewers = isAdmin ? assignedReviewers : assignedReviewers.filter(r => r.id === user?.id);
 
   return (
     <div className="space-y-6">
       <AppBreadcrumb items={breadcrumbItems} />
 
-      {/* Card A: Candidate Header */}
+      {/* Candidate Header Card */}
       <Card className="rounded-xl shadow-sm">
         <CardHeader className="p-6 pb-4">
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            {candidate?.user?.firstName + ' ' + candidateUser?.lastName}
+            <UserIcon className="h-5 w-5" />
+            {candidateUser?.firstName} {candidateUser?.lastName}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left Column */}
             <div className="space-y-3">
               {candidateUser?.email && (
                 <p className="text-sm text-muted-foreground">{candidateUser.email}</p>
               )}
-              
+
               <div className="flex items-center gap-2 text-sm">
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Mission:</span>
@@ -260,137 +222,150 @@ export default function CandidatDetailPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            {/* Right Column */}
+            <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Reviewers:</span>
+                <span className="text-muted-foreground">Reviewers ({assignedReviewers.length}):</span>
               </div>
+
+              {assignedReviewers.length < 2 && (
+                <Alert className="border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-200">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Il est recommandé d'avoir au moins 2 reviewers.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="flex flex-wrap gap-2">
-                {reviewers?.map((reviewer, index) => {
-                  const role = reviewerRolesMap.get(reviewer.id);
-                  return (
-                    <div key={reviewer.id} className="flex items-center gap-1">
-                      <span className="text-sm">{reviewer?.firstName + ' ' + reviewer?.lastName}</span>
-                      {role && (
-                        <Badge variant="outline" className="text-xs">
-                          {role}
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })}
-                {reviewers?.length === 0 && (
+                {assignedReviewers.map((reviewer) => (
+                  <Badge key={reviewer.id} variant="outline">
+                    {reviewer.firstName} {reviewer.lastName}
+                  </Badge>
+                ))}
+                {assignedReviewers.length === 0 && (
                   <span className="text-sm text-muted-foreground">Aucun reviewer assigné</span>
                 )}
               </div>
 
-              {candidate.githubRepoUrl && (
-                <Button
-                  onClick={handleFetchPRComments}
-                  disabled={fetchingPRs}
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                >
-                  {fetchingPRs ? (
-                    <>
+              {/* GitHub Admin Actions */}
+              {isAdmin && candidate.githubRepoUrl && (
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    onClick={handleInviteToGithub}
+                    disabled={invitingGithub}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {invitingGithub ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Récupération...
-                    </>
-                  ) : (
-                    <>
-                      <Code2 className="h-4 w-4 mr-2" />
-                      Récupérer les code reviews
-                    </>
-                  )}
-                </Button>
+                    ) : (
+                      <UserPlus className="h-4 w-4 mr-2" />
+                    )}
+                    Inviter au repo
+                  </Button>
+
+                  <Button
+                    onClick={handleExcludeFromGithub}
+                    disabled={excludingGithub}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {excludingGithub ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <UserMinus className="h-4 w-4 mr-2" />
+                    )}
+                    Retirer du repo
+                  </Button>
+                </div>
               )}
             </div>
           </div>
-
-          {reviewers?.length === 0 && scorecardCriteria.length === 0 && (
-            <Alert>
-              <AlertDescription>
-                Aucun reviewer assigné et aucun critère de scorecard configuré pour cette mission.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
-      {/* Card B: Evaluations par reviewer */}
-      {reviewers?.length > 0 && (
-        <Card className="rounded-xl shadow-sm">
-          <CardHeader className="p-6 pb-4">
-            <CardTitle>Évaluations reviewers</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className={editingReportId ? "space-y-4" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
-              {reviewers?.map((reviewer, index) => {
-                const role = getReviewerRole(index);
-                const report = getReviewerReport(reviewer.id, role);
+      {/* Tabs: Reviewer Reports + Final Report */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'reviewers' | 'final')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="reviewers" className="flex items-center gap-2">
+            <GitPullRequest className="h-4 w-4" />
+            Rapports reviewers
+          </TabsTrigger>
+          <TabsTrigger value="final" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Rapport final
+          </TabsTrigger>
+        </TabsList>
 
-                if (report) {
-                  const isEditing = editingReportId === report.id;
-
-                  return isEditing ? (
-                    <ReviewerReportForm
-                      key={report.id}
-                      report={report}
-                      authorName={reviewer?.firstName + ' ' + reviewer?.lastName}
-                      scorecardCriteria={scorecardCriteria}
-                      onReportUpdated={handleReportUpdated}
-                      onCancel={handleCancelEdit}
-                      reviewer={reviewer}
-                      candidate={candidate}
+        {/* Tab 1: Reviewer Reports */}
+        <TabsContent value="reviewers" className="space-y-4">
+          {visibleReviewers.length === 0 ? (
+            <Alert>
+              <AlertDescription>
+                Aucun reviewer assigné à cette mission.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Reviewer Side Menu (left) */}
+              <div className="lg:col-span-1">
+                <Card className="rounded-xl shadow-sm">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Reviewers</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <ReviewerSideMenu
+                      reviewers={visibleReviewers}
+                      reports={reviewerReports}
+                      activeReviewerId={selectedReviewerId}
+                      onSelectReviewer={setSelectedReviewerId}
                     />
-                  ) : (
-                    <ReviewerEvaluationCard
-                      key={report.id}
-                      report={report}
-                      authorName={reviewer?.firstName + ' ' + reviewer?.lastName}
-                      scorecardCriteria={scorecardCriteria}
-                      onEdit={() => handleEditReport(report.id)}
-                    />
-                  );
-                }
+                  </CardContent>
+                </Card>
+              </div>
 
-                return (
-                  <CreateReportButton
-                    key={`create-${reviewer.id}`}
+              {/* Selected Reviewer Report (right) */}
+              <div className="lg:col-span-3">
+                {selectedReport && selectedReviewer ? (
+                  <ReviewerReportSection
+                    report={selectedReport}
                     candidateId={candidate.id}
-                    reviewer={reviewer}
-                    role={role}
+                    authorName={`${selectedReviewer.firstName} ${selectedReviewer.lastName}`}
                     scorecardCriteria={scorecardCriteria}
-                    onReportCreated={handleReportCreated}
+                    onReportUpdated={loadData}
+                    canEdit={canEditReports}
                   />
-                );
-              })}
+                ) : (
+                  <Alert>
+                    <AlertDescription>
+                      {selectedReviewerId
+                        ? 'Ce reviewer n\'a pas encore créé de rapport.'
+                        : 'Sélectionnez un reviewer pour voir son rapport.'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </TabsContent>
 
-      {/* Card C: Évaluation finale */}
-      {editingFinalReport && finalReport ? (
-        <FinalReportForm
-          report={finalReport}
-          scorecardCriteria={scorecardCriteria}
-          onReportUpdated={handleFinalReportUpdated}
-          onCancel={handleCancelFinalEdit}
-        />
-      ) : (
-        <FinalEvaluationCard
-          report={finalReport}
-          scorecardCriteria={scorecardCriteria}
-          hasReviewerReports={hasReviewerReports}
-          onGenerateFinal={handleGenerateFinal}
-          onEdit={finalReport ? handleEditFinalReport : undefined}
-          candidateName={candidateUser?.firstName + ' ' + candidateUser?.lastName}
-          missionTitle={mission.title}
-          clientName={client.name}
-        />
-      )}
+        {/* Tab 2: Final Report */}
+        <TabsContent value="final" className="space-y-4">
+          <FinalReportSection
+            candidateId={candidate.id}
+            currentUserId={user?.id || ''}
+            finalReport={finalReport}
+            reviewerReports={reviewerReports}
+            candidate={candidate}
+            mission={mission}
+            client={client}
+            scorecardCriteria={scorecardCriteria}
+            onReportUpdated={loadData}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
