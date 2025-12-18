@@ -170,6 +170,7 @@ export interface Candidate {
   githubUsername?: string | null;
   githubRepoUrl?: string | null;
   notes?: string | null;
+  assignedReviewers?: User[]; // Reviewers assigned specifically to this candidate
   createdAt: string;
   updatedAt: string;
   createdBy?: string | null;

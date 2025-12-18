@@ -135,7 +135,7 @@ export async function createCandidate(
 
 export async function updateCandidate(
   id: string,
-  updates: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>>
+  updates: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>> & { assignedReviewers?: User[] }
 ): Promise<Candidate> {
   return apiClient.updateCandidate(id, updates);
 }

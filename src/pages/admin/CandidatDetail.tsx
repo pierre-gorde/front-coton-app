@@ -20,9 +20,10 @@ import { Button } from '@/components/ui/button';
 import { ReviewerSideMenu } from '@/components/candidat/ReviewerSideMenu';
 import { ReviewerReportSection } from '@/components/candidat/ReviewerReportSection';
 import { FinalReportSection } from '@/components/candidat/FinalReportSection';
+import { CandidateReviewerAssignmentDialog } from '@/components/candidat/CandidateReviewerAssignmentDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { RoleEnum } from '@/lib/types';
+import { RoleEnum, type User } from '@/lib/types';
 
 export default function CandidatDetailPage() {
   const { candidatId } = useParams<{ candidatId: string }>();
@@ -34,6 +35,8 @@ export default function CandidatDetailPage() {
   const [selectedReviewerId, setSelectedReviewerId] = useState<string | null>(null);
   const [invitingGithub, setInvitingGithub] = useState(false);
   const [excludingGithub, setExcludingGithub] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [allFreelances, setAllFreelances] = useState<User[]>([]);
 
   const isAdmin = roles.includes(RoleEnum.ADMIN);
   const isReviewer = roles.includes(RoleEnum.FREELANCE);
@@ -71,6 +74,26 @@ export default function CandidatDetailPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Load all freelances for reviewer assignment (admin only)
+  useEffect(() => {
+    if (isAdmin) {
+      const loadFreelances = async () => {
+        try {
+          const { listUsers } = await import('@/lib/services/checkAdminService');
+          const users = await listUsers();
+          // Filter to only freelances (FREELANCE role)
+          const freelances = users.filter(u =>
+            u.roles?.some(r => r.role.name === RoleEnum.FREELANCE)
+          );
+          setAllFreelances(freelances);
+        } catch (error) {
+          console.error('Failed to load freelances:', error);
+        }
+      };
+      loadFreelances();
+    }
+  }, [isAdmin]);
 
   const handleInviteToGithub = async () => {
     if (!candidatId) return;
@@ -118,6 +141,11 @@ export default function CandidatDetailPage() {
     } finally {
       setExcludingGithub(false);
     }
+  };
+
+  const handleAssignmentSuccess = () => {
+    // Reload data to get updated reviewer list
+    loadData();
   };
 
   if (loading) {
@@ -249,6 +277,20 @@ export default function CandidatDetailPage() {
                 )}
               </div>
 
+              {/* Admin: Assign Reviewers Button */}
+              {isAdmin && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setAssignDialogOpen(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Assigner reviewers
+                  </Button>
+                </div>
+              )}
+
               {/* GitHub Admin Actions */}
               {isAdmin && candidate.githubRepoUrl && (
                 <div className="flex gap-2 mt-2">
@@ -366,6 +408,18 @@ export default function CandidatDetailPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Reviewer Assignment Dialog */}
+      {isAdmin && (
+        <CandidateReviewerAssignmentDialog
+          open={assignDialogOpen}
+          onOpenChange={setAssignDialogOpen}
+          candidate={candidate}
+          currentAssignedReviewers={assignedReviewers}
+          allFreelances={allFreelances}
+          onSuccess={handleAssignmentSuccess}
+        />
+      )}
     </div>
   );
 }

@@ -84,7 +84,7 @@ export interface CheckAdminApi {
 
   updateCandidate(
     id: string,
-    input: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>>
+    input: Partial<Omit<Candidate, 'id' | 'userId' | 'checkMissionId'>> & { assignedReviewers?: User[] }
   ): Promise<Candidate>;
 
   deleteCandidate(id: string): Promise<void>;
