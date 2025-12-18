@@ -19,7 +19,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { CandidateReport, ScorecardCriterion, CriterionScore, CriterionGroup, CandidateReportRole, PRReviewComment } from '@/lib/types';
 import { ReportRole } from '@/lib/types';
-import { updateReviewerReport, createReviewerReport, computeFinalScore } from '@/lib/services/checkAdminService';
+import { updateReviewerReport, computeFinalScore } from '@/lib/services/checkAdminService';
 import { PRCommentsSection } from './PRCommentsSection';
 
 interface ReviewerReportFormProps {
@@ -33,8 +33,7 @@ interface ReviewerReportFormProps {
 }
 
 const roleLabels: Record<CandidateReportRole, string> = {
-  PRIMARY_REVIEWER: 'Primary Reviewer',
-  SECONDARY_REVIEWER: 'Secondary Reviewer',
+  REVIEWER: 'Reviewer',
   FINAL: 'Final',
 };
 
@@ -214,32 +213,15 @@ export function ReviewerReportForm({
   const handleSave = async () => {
     setSaving(true);
     try {
-      let updated: CandidateReport;
-
-      // If report has no ID, create new report
-      if (!report.id) {
-        updated = await createReviewerReport({
-          candidateId,
-          reviewerUserId,
-          role: ReportRole.REVIEWER,
-          criterionScores,
-          summary,
-          positives,
-          negatives,
-          remarks,
-          prReviewComments,
-        });
-      } else {
-        // Otherwise update existing report
-        updated = await updateReviewerReport(report.id, {
-          criterionScores,
-          summary,
-          positives,
-          negatives,
-          remarks,
-          prReviewComments,
-        });
-      }
+      // Report is always created via API first, so we only need to update here
+      const updated = await updateReviewerReport(report.id, {
+        criterionScores,
+        summary,
+        positives,
+        negatives,
+        remarks,
+        prReviewComments,
+      });
 
       onReportUpdated(updated);
       toast({
