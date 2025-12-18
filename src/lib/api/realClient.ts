@@ -270,6 +270,10 @@ export class RealCheckAdminClient implements CheckAdminApi {
       remarks: input.remarks,
     });
   }
+
+  async generateFinalReport(candidateId: string): Promise<CandidateReport> {
+    return api.post<CandidateReport>(`/admin/reports/generate-final/${candidateId}`, {});
+  }
 }
 
 export const realCheckAdminClient = new RealCheckAdminClient();

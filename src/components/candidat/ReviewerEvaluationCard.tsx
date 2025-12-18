@@ -1,8 +1,5 @@
-import { useState } from 'react';
+import type { CandidateReport, CriterionGroup, ScorecardCriterion } from '@/lib/types';
 import { ChevronDown, ChevronRight, Pencil } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,7 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { CandidateReport, ScorecardCriterion, CriterionGroup } from '@/lib/types';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 interface ReviewerEvaluationCardProps {
   report: CandidateReport;
@@ -156,7 +156,7 @@ export function ReviewerEvaluationCard({
               Points positifs
             </h4>
             <p className="text-sm whitespace-pre-line text-muted-foreground">
-              {report.positives}
+              {report.positivePoints}
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export function ReviewerEvaluationCard({
               Points négatifs
             </h4>
             <p className="text-sm whitespace-pre-line text-muted-foreground">
-              {report.negatives}
+              {report.negativePoints}
             </p>
           </div>
 

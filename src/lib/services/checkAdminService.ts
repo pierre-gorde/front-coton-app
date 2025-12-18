@@ -278,39 +278,12 @@ export function computeFinalScore(
 }
 
 /**
- * Generate or update the FINAL report by merging ALL reviewer reports.
- * FINAL report is derived data, not the source of truth.
+ * Generate FINAL report by calling backend API
+ * The backend will merge all REVIEWER reports automatically
  */
 export async function generateFinalReport(
   candidateId: string,
-  authorUserId: string
+  _authorUserId: string // Keep for backward compatibility but unused
 ): Promise<CandidateReport> {
-  // Import merge utilities
-  const { generateMergedReportData } = await import('@/lib/utils/reportMerge');
-
-  // Get candidate evaluation data
-  const evalData = await getCandidateEvaluationView(candidateId);
-
-  if (!evalData) {
-    throw new Error(`Candidate ${candidateId} not found`);
-  }
-
-  const { reports, scorecardCriteria } = evalData;
-
-  // Get all reviewer reports (exclude FINAL)
-  const reviewerReports = reports.filter(r => r.role !== 'FINAL');
-
-  if (reviewerReports.length === 0) {
-    throw new Error('At least one reviewer report is required to generate FINAL report');
-  }
-
-  // Generate merged data from all reviewer reports
-  const mergedData = generateMergedReportData(reviewerReports, scorecardCriteria);
-
-  // Upsert FINAL report
-  return apiClient.upsertFinalReport({
-    candidateId,
-    authorUserId,
-    ...mergedData,
-  });
+  return apiClient.generateFinalReport(candidateId);
 }

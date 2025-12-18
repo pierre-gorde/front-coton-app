@@ -129,4 +129,6 @@ export interface CheckAdminApi {
     negativePoints: string;
     remarks: string;
   }): Promise<CandidateReport>;
+
+  generateFinalReport(candidateId: string): Promise<CandidateReport>;
 }
