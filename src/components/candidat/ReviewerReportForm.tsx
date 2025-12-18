@@ -1,13 +1,6 @@
-import { useState, useCallback } from 'react';
-import { Save, Loader2, FileEdit, X } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import type { CandidateReport, CandidateReportRole, CriterionGroup, CriterionScore, PRReviewComment, ScorecardCriterion } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
+import { FileEdit, Loader2, Save, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -16,11 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import type { CandidateReport, ScorecardCriterion, CriterionScore, CriterionGroup, CandidateReportRole, PRReviewComment } from '@/lib/types';
-import { ReportRole } from '@/lib/types';
-import { updateReviewerReport, computeFinalScore } from '@/lib/services/checkAdminService';
+import { computeFinalScore, updateReviewerReport } from '@/lib/services/checkAdminService';
+import { useCallback, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PRCommentsSection } from './PRCommentsSection';
+import { ReportRole } from '@/lib/types';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReviewerReportFormProps {
   report: CandidateReport;
@@ -175,8 +175,8 @@ export function ReviewerReportForm({
     initializeCriterionScores(report.criterionScores, scorecardCriteria)
   );
   const [summary, setSummary] = useState(report.summary);
-  const [positives, setPositives] = useState(positivePointsToString(report.positivePoints));
-  const [negatives, setNegatives] = useState(negativePointsToString(report.negativePoints));
+  const [positivePoints, setPositivePoints] = useState(positivePointsToString(report.positivePoints));
+  const [negativePoints, setNegativePoints] = useState(negativePointsToString(report.negativePoints));
   const [remarks, setRemarks] = useState(report.remarks);
   const [prReviewComments, setPrReviewComments] = useState<PRReviewComment[]>(report.prReviewComments || []);
 
@@ -187,12 +187,12 @@ export function ReviewerReportForm({
   const isDirty = useCallback(() => {
     return (
       summary !== report.summary ||
-      positives !== report.positives ||
-      negatives !== report.negatives ||
+      positivePoints !== report.positivePoints ||
+      negativePoints !== report.negativePoints ||
       remarks !== report.remarks ||
       JSON.stringify(criterionScores) !== JSON.stringify(report.criterionScores)
     );
-  }, [summary, positives, negatives, remarks, criterionScores, report]);
+  }, [summary, positivePoints, negativePoints, remarks, criterionScores, report]);
 
   const handleScoreChange = (criterionId: string, score: number) => {
     setCriterionScores(prev => 
@@ -217,8 +217,8 @@ export function ReviewerReportForm({
       const updated = await updateReviewerReport(report.id, {
         criterionScores,
         summary,
-        positives,
-        negatives,
+        positivePoints,
+        negativePoints,
         remarks,
         prReviewComments,
       });
@@ -334,8 +334,8 @@ export function ReviewerReportForm({
             <Textarea
               id="positives"
               placeholder="- Point positif 1&#10;- Point positif 2"
-              value={positives}
-              onChange={(e) => setPositives(e.target.value)}
+              value={positivePoints}
+              onChange={(e) => setPositivePoints(e.target.value)}
               rows={4}
             />
           </div>
@@ -346,8 +346,8 @@ export function ReviewerReportForm({
             <Textarea
               id="negatives"
               placeholder="- Point négatif 1&#10;- Point négatif 2"
-              value={negatives}
-              onChange={(e) => setNegatives(e.target.value)}
+              value={negativePoints}
+              onChange={(e) => setNegativePoints(e.target.value)}
               rows={4}
             />
           </div>

@@ -10,8 +10,8 @@ import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateRepo
 export interface ReportUpdatePayload {
   criterionScores?: CriterionScore[];
   summary?: string;
-  positives?: string;
-  negatives?: string;
+  positivePoints?: string;
+  negativePoints?: string;
   remarks?: string;
   prReviewComments?: PRReviewComment[];
   isValidated?: boolean;
@@ -111,8 +111,8 @@ export interface CheckAdminApi {
     role: CandidateReportRole;
     criterionScores: CriterionScore[];
     summary?: string;
-    positives?: string;
-    negatives?: string;
+    positivePoints?: string;
+    negativePoints?: string;
     remarks?: string;
     prReviewComments?: PRReviewComment[];
   }): Promise<CandidateReport>;
@@ -125,8 +125,8 @@ export interface CheckAdminApi {
     criterionScores: CriterionScore[];
     finalScore: number;
     summary: string;
-    positives: string;
-    negatives: string;
+    positivePoints: string;
+    negativePoints: string;
     remarks: string;
   }): Promise<CandidateReport>;
 }

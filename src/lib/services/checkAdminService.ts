@@ -202,8 +202,8 @@ export async function createReviewerReport(input: {
   role: import('@/lib/types').CandidateReportRole;
   criterionScores: CriterionScore[];
   summary?: string;
-  positives?: string;
-  negatives?: string;
+  positivePoints?: string;
+  negativePoints?: string;
   remarks?: string;
   prReviewComments?: import('@/lib/types').PRReviewComment[];
 }): Promise<CandidateReport> {
@@ -213,8 +213,8 @@ export async function createReviewerReport(input: {
     role: input.role,
     criterionScores: input.criterionScores,
     summary: input.summary || '',
-    positives: input.positives || '',
-    negatives: input.negatives || '',
+    positivePoints: input.positivePoints || '',
+    negativePoints: input.negativePoints || '',
     remarks: input.remarks || '',
     prReviewComments: input.prReviewComments,
   });

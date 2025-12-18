@@ -14,8 +14,8 @@ import type {
   Scorecard,
   User,
 } from '@/lib/types';
+import type { CheckAdminApi, ReportUpdatePayload } from './contracts';
 
-import type { CheckAdminApi } from './contracts';
 import { api } from './client';
 
 /**
@@ -211,8 +211,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
     role: CandidateReportRole | 'FINAL';
     criterionScores: Array<{ criterionId: string; score: number; comment?: string }>;
     summary?: string;
-    positives?: string;
-    negatives?: string;
+    positivePoints?: string;
+    negativePoints?: string;
     remarks?: string;
     prReviewComments?: Array<{
       id: number;
@@ -231,25 +231,7 @@ export class RealCheckAdminClient implements CheckAdminApi {
 
   async updateReport(
     id: string,
-    input: {
-      criterionScores?: Array<{ criterionId: string; score: number; comment?: string }>;
-      summary?: string;
-      positives?: string;
-      negatives?: string;
-      remarks?: string;
-      prReviewComments?: Array<{
-        id: number;
-        body: string;
-        path: string;
-        line: number;
-        createdAt: string;
-        prNumber: number;
-        prTitle: string;
-        prUrl: string;
-        code?: string;
-      }>;
-      isValidated?: boolean;
-    }
+    input: ReportUpdatePayload
   ): Promise<CandidateReport> {
     return api.patch<CandidateReport>(`/admin/reports/${id}`, input);
   }
@@ -260,8 +242,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
     criterionScores: Array<{ criterionId: string; score: number; comment?: string }>;
     finalScore: number;
     summary: string;
-    positives: string;
-    negatives: string;
+    positivePoints: string;
+    negativePoints: string;
     remarks: string;
   }): Promise<CandidateReport> {
     // Check if final report exists
@@ -276,8 +258,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
         return this.updateReport(reportId, {
           criterionScores: input.criterionScores,
           summary: input.summary,
-          positives: input.positives,
-          negatives: input.negatives,
+          positivePoints: input.positivePoints,
+          negativePoints: input.negativePoints,
           remarks: input.remarks,
         });
       }
@@ -293,8 +275,8 @@ export class RealCheckAdminClient implements CheckAdminApi {
       role: 'FINAL',
       criterionScores: input.criterionScores,
       summary: input.summary,
-      positives: input.positives,
-      negatives: input.negatives,
+      positivePoints: input.positivePoints,
+      negativePoints: input.negativePoints,
       remarks: input.remarks,
     });
   }
