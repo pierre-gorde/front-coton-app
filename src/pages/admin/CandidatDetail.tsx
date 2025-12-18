@@ -4,8 +4,8 @@
  * Following CLAUDE.md patterns: proper state management, error handling
  */
 
-import { Alert, AlertDescription, AlertTriangle } from '@/components/ui/alert';
-import { Briefcase, Building2, ExternalLink, FileText, GitPullRequest, Loader2, User as UserIcon, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, Briefcase, Building2, ExternalLink, FileText, GitPullRequest, Loader2, User as UserIcon, UserMinus, UserPlus, Users } from 'lucide-react';
 import { type CandidateEvaluationView } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useParams } from 'react-router-dom';
