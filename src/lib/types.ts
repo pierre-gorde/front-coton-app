@@ -203,6 +203,7 @@ export interface CandidateReport {
   id: string;
   candidateId: string;
   authorUserId: string;
+  authorUser?: User; // Populated in some contexts
   role: CandidateReportRole;
   criterionScores: CriterionScore[];
   finalScore: number; // 0–100, weighted global score
@@ -211,6 +212,8 @@ export interface CandidateReport {
   negativePoints: string[]; // Array of negative points
   remarks: string; // rich text as string
   prReviewComments?: PRReviewComment[]; // Code review comments from GitHub PRs
+  isComplete?: boolean; // Backend-computed completion status
+  isValidated?: boolean; // Only for FINAL reports - marks as ready for PDF export
   createdAt: string;
   updatedAt: string;
   createdBy?: string | null;

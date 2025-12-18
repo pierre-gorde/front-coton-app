@@ -214,6 +214,22 @@ export async function updateFinalReport(
 }
 
 /**
+ * Validate a final report - marks it as ready for PDF export
+ */
+export async function validateFinalReport(reportId: string): Promise<CandidateReport> {
+  // This will be a dedicated endpoint on the backend
+  // For now, we use updateReport with isValidated flag
+  return apiClient.updateReport(reportId, { isValidated: true });
+}
+
+/**
+ * Get a specific report by ID
+ */
+export async function getReportById(reportId: string): Promise<CandidateReport | undefined> {
+  return apiClient.getReportById(reportId);
+}
+
+/**
  * Compute the weighted final score from criterion scores
  */
 export function computeFinalScore(
@@ -235,7 +251,7 @@ export function computeFinalScore(
 }
 
 /**
- * Generate or update the FINAL report by merging reviewer reports.
+ * Generate or update the FINAL report by merging ALL reviewer reports.
  * FINAL report is derived data, not the source of truth.
  */
 export async function generateFinalReport(
@@ -244,30 +260,25 @@ export async function generateFinalReport(
 ): Promise<CandidateReport> {
   // Import merge utilities
   const { generateMergedReportData } = await import('@/lib/utils/reportMerge');
-  
+
   // Get candidate evaluation data
   const evalData = await getCandidateEvaluationView(candidateId);
-  
+
   if (!evalData) {
     throw new Error(`Candidate ${candidateId} not found`);
   }
 
   const { reports, scorecardCriteria } = evalData;
-  
-  // Get reviewer reports
-  const primaryReport = reports.find(r => r.role === 'PRIMARY_REVIEWER');
-  const secondaryReport = reports.find(r => r.role === 'SECONDARY_REVIEWER');
-  
-  if (!primaryReport && !secondaryReport) {
+
+  // Get all reviewer reports (exclude FINAL)
+  const reviewerReports = reports.filter(r => r.role !== 'FINAL');
+
+  if (reviewerReports.length === 0) {
     throw new Error('At least one reviewer report is required to generate FINAL report');
   }
 
-  // Generate merged data
-  const mergedData = generateMergedReportData(
-    primaryReport,
-    secondaryReport,
-    scorecardCriteria
-  );
+  // Generate merged data from all reviewer reports
+  const mergedData = generateMergedReportData(reviewerReports, scorecardCriteria);
 
   // Upsert FINAL report
   return apiClient.upsertFinalReport({

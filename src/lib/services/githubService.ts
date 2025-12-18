@@ -244,6 +244,7 @@ export async function fetchAllPRsWithComments(
 
 /**
  * Fetch PR review comments from the last N PRs made by a specific GitHub user
+ * @deprecated Use fetchPRCommentsByReviewer instead (backend API)
  */
 export async function fetchPRCommentsByAuthor(
   repoUrl: string,
@@ -282,4 +283,38 @@ export async function fetchPRCommentsByAuthor(
   }
 
   return commentsByAuthor;
+}
+
+// ===========================================
+// Backend API Integration
+// ===========================================
+
+import { api } from '@/lib/api/client';
+
+/**
+ * Fetch PR comments for a reviewer via backend API
+ * Backend fetches all comments from candidate's GitHub repo and filters by reviewer's githubUsername
+ */
+export async function fetchPRCommentsByReviewer(
+  candidateId: string,
+  reviewerUserId: string
+): Promise<import('@/lib/types').PRReviewComment[]> {
+  return api.get<import('@/lib/types').PRReviewComment[]>(
+    `/admin/candidates/${candidateId}/github/pr-comments`,
+    { params: { reviewerUserId } }
+  );
+}
+
+/**
+ * Invite candidate to GitHub repository (Admin only)
+ */
+export async function inviteCandidateToRepo(candidateId: string): Promise<void> {
+  return api.post<void>(`/admin/candidates/${candidateId}/github/invite`, {});
+}
+
+/**
+ * Remove candidate from GitHub repository (Admin only)
+ */
+export async function excludeCandidateFromRepo(candidateId: string): Promise<void> {
+  return api.post<void>(`/admin/candidates/${candidateId}/github/exclude`, {});
 }

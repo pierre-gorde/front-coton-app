@@ -8,12 +8,13 @@ import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateRepo
  * Payload for creating/updating a reviewer report
  */
 export interface ReportUpdatePayload {
-  criterionScores: CriterionScore[];
-  summary: string;
-  positives: string;
-  negatives: string;
-  remarks: string;
+  criterionScores?: CriterionScore[];
+  summary?: string;
+  positives?: string;
+  negatives?: string;
+  remarks?: string;
   prReviewComments?: PRReviewComment[];
+  isValidated?: boolean;
 }
 
 /**
@@ -101,6 +102,8 @@ export interface CheckAdminApi {
   ): Promise<CandidateReport | undefined>;
 
   getReportsByCandidate(candidateId: string): Promise<CandidateReport[]>;
+
+  getReportById(reportId: string): Promise<CandidateReport | undefined>;
 
   createReport(input: {
     candidateId: string;

@@ -194,6 +194,17 @@ export class RealCheckAdminClient implements CheckAdminApi {
     });
   }
 
+  async getReportById(reportId: string): Promise<CandidateReport | undefined> {
+    try {
+      return await api.get<CandidateReport>(`/admin/reports/${reportId}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
   async createReport(input: {
     candidateId: string;
     authorUserId: string;
@@ -226,6 +237,7 @@ export class RealCheckAdminClient implements CheckAdminApi {
         prUrl: string;
         code?: string;
       }>;
+      isValidated?: boolean;
     }
   ): Promise<CandidateReport> {
     return api.patch<CandidateReport>(`/admin/reports/${id}`, input);
