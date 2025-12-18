@@ -220,10 +220,9 @@ export interface MergedReportData {
   criterionScores: CriterionScore[];
   finalScore: number;
   summary: string;
-  positives: string;
-  negatives: string;
+  positivePoints: string;
+  negativePoints: string;
   remarks: string;
-  prReviewComments: import('@/lib/types').PRReviewComment[];
 }
 
 /**
@@ -247,11 +246,11 @@ export function generateMergedReportData(
   // Merge text fields with reviewer name headers
   const summary = mergeSummaries(reports);
 
-  const positives = mergeBulletSection(
+  const positivePoints = mergeBulletSection(
     reports.map(r => Array.isArray(r.positivePoints) ? r.positivePoints.join('\n') : r.positivePoints || '')
   );
 
-  const negatives = mergeBulletSection(
+  const negativePoints = mergeBulletSection(
     reports.map(r => Array.isArray(r.negativePoints) ? r.negativePoints.join('\n') : r.negativePoints || '')
   );
 
@@ -262,19 +261,13 @@ export function generateMergedReportData(
     remarks += `\n\n⚠️ Critères sans score: ${missingCriteria.join(', ')}`;
   }
 
-  // Combine all PR review comments from all reviewers
-  const prReviewComments = reports
-    .flatMap(r => r.prReviewComments || [])
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
   return {
     criterionScores: scores,
     finalScore,
     summary,
-    positives,
-    negatives,
+    positivePoints,
+    negativePoints,
     remarks,
-    prReviewComments,
   };
 }
 
