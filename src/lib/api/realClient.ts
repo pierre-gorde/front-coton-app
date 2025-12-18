@@ -214,6 +214,17 @@ export class RealCheckAdminClient implements CheckAdminApi {
     positives?: string;
     negatives?: string;
     remarks?: string;
+    prReviewComments?: Array<{
+      id: number;
+      body: string;
+      path: string;
+      line: number;
+      createdAt: string;
+      prNumber: number;
+      prTitle: string;
+      prUrl: string;
+      code?: string;
+    }>;
   }): Promise<CandidateReport> {
     return api.post<CandidateReport>('/admin/reports', input);
   }

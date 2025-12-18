@@ -212,6 +212,11 @@ export async function createReviewerReport(input: {
     authorUserId: input.reviewerUserId,
     role: input.role,
     criterionScores: input.criterionScores,
+    summary: input.summary || '',
+    positives: input.positives || '',
+    negatives: input.negatives || '',
+    remarks: input.remarks || '',
+    prReviewComments: input.prReviewComments,
   });
 }
 

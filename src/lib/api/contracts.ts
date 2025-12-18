@@ -110,6 +110,11 @@ export interface CheckAdminApi {
     authorUserId: string;
     role: CandidateReportRole;
     criterionScores: CriterionScore[];
+    summary?: string;
+    positives?: string;
+    negatives?: string;
+    remarks?: string;
+    prReviewComments?: PRReviewComment[];
   }): Promise<CandidateReport>;
 
   updateReport(reportId: string, payload: ReportUpdatePayload): Promise<CandidateReport>;
