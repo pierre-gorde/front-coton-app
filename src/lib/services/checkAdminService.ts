@@ -205,7 +205,7 @@ export async function createReviewerReport(input: {
   positivePoints?: string;
   negativePoints?: string;
   remarks?: string;
-  prReviewComments?: import('@/lib/types').PRReviewComment[];
+  prReviewComments?: string;
 }): Promise<CandidateReport> {
   return apiClient.createReport({
     candidateId: input.candidateId,
@@ -216,7 +216,7 @@ export async function createReviewerReport(input: {
     positivePoints: input.positivePoints || '',
     negativePoints: input.negativePoints || '',
     remarks: input.remarks || '',
-    prReviewComments: input.prReviewComments,
+    prReviewComments: input.prReviewComments || '',
   });
 }
 

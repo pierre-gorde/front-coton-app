@@ -208,10 +208,10 @@ export interface CandidateReport {
   criterionScores: CriterionScore[];
   finalScore: number; // 0–100, weighted global score
   summary: string; // paragraph: avis global vs attentes
-  positivePoints: string[]; // Array of positive points
-  negativePoints: string[]; // Array of negative points
+  positivePoints: string; // string of positive points
+  negativePoints: string; // string of negative points
   remarks: string; // rich text as string
-  prReviewComments?: PRReviewComment[]; // Code review comments from GitHub PRs
+  prReviewComments?: string; // string of code review comments from GitHub PRs
   isComplete?: boolean; // Backend-computed completion status
   isValidated?: boolean; // Only for FINAL reports - marks as ready for PDF export
   createdAt: string;

@@ -13,7 +13,7 @@ export interface ReportUpdatePayload {
   positivePoints?: string;
   negativePoints?: string;
   remarks?: string;
-  prReviewComments?: PRReviewComment[];
+  prReviewComments?: string;
   isValidated?: boolean;
 }
 
@@ -114,7 +114,7 @@ export interface CheckAdminApi {
     positivePoints?: string;
     negativePoints?: string;
     remarks?: string;
-    prReviewComments?: PRReviewComment[];
+    prReviewComments?: string;
   }): Promise<CandidateReport>;
 
   updateReport(reportId: string, payload: ReportUpdatePayload): Promise<CandidateReport>;

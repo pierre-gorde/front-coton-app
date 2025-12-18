@@ -175,10 +175,10 @@ export function ReviewerReportForm({
     initializeCriterionScores(report.criterionScores, scorecardCriteria)
   );
   const [summary, setSummary] = useState(report.summary);
-  const [positivePoints, setPositivePoints] = useState(positivePointsToString(report.positivePoints));
-  const [negativePoints, setNegativePoints] = useState(negativePointsToString(report.negativePoints));
+  const [positivePoints, setPositivePoints] = useState(report.positivePoints);
+  const [negativePoints, setNegativePoints] = useState(report.negativePoints);
   const [remarks, setRemarks] = useState(report.remarks);
-  const [prReviewComments, setPrReviewComments] = useState<PRReviewComment[]>(report.prReviewComments || []);
+  const [prReviewComments, setPrReviewComments] = useState(report.prReviewComments || '');
 
   // Calculate live final score
   const liveScore = computeFinalScore(criterionScores, scorecardCriteria);
@@ -207,7 +207,7 @@ export function ReviewerReportForm({
   };
 
   const handleCommentsLoaded = (comments: PRReviewComment[]) => {
-    setPrReviewComments(comments);
+    setPrReviewComments(comments.join('\n'));
   };
 
   const handleSave = async () => {
