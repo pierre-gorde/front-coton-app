@@ -199,8 +199,9 @@ export function FinalReportSection({
   return (
     <div className="space-y-4">
       <FinalEvaluationCard
-        finalReport={finalReport}
+        report={finalReport}
         scorecardCriteria={scorecardCriteria}
+        hasReviewerReports={reviewerReports.length > 0}
         onEdit={handleEdit}
       />
 

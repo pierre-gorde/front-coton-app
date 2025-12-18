@@ -237,7 +237,7 @@ export function FinalEvaluationCard({
                   Points positifs
                 </h4>
                 <p className="text-sm whitespace-pre-line text-muted-foreground">
-                  {report.positives}
+                  {report.positivePoints}
                 </p>
               </div>
 
@@ -246,7 +246,7 @@ export function FinalEvaluationCard({
                   Points négatifs
                 </h4>
                 <p className="text-sm whitespace-pre-line text-muted-foreground">
-                  {report.negatives}
+                  {report.negativePoints}
                 </p>
               </div>
 
@@ -278,45 +278,19 @@ export function FinalEvaluationCard({
             )}
 
             {/* PR Review Comments Section (Read-only) */}
-            {report.prReviewComments && report.prReviewComments.length > 0 && (
+            {report.prReviewComments && report.prReviewComments.trim() && (
               <div className="space-y-4 border-t pt-4">
                 <h4 className="text-sm font-medium flex items-center gap-2">
                   <Code2 className="h-4 w-4" />
-                  Code Reviews GitHub ({report.prReviewComments.length})
+                  Code Reviews GitHub
                 </h4>
                 <p className="text-xs text-muted-foreground">
                   Commentaires de code review extraits des PRs du repository
                 </p>
-                <div className="space-y-3">
-                  {report.prReviewComments.map((comment) => (
-                    <div key={comment.id} className="border rounded-lg p-3 space-y-2 bg-muted/20">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <a
-                            href={comment.prUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-medium text-primary hover:underline"
-                          >
-                            PR #{comment.prNumber}: {comment.prTitle}
-                          </a>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {comment.path}:{comment.line} • {new Date(comment.createdAt).toLocaleDateString('fr-FR')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="prose prose-sm max-w-none">
-                        <p className="text-xs whitespace-pre-wrap">{comment.body}</p>
-                      </div>
-                      {comment.code && (
-                        <div className="mt-2">
-                          <pre className="bg-slate-900 text-slate-50 p-2 rounded text-xs overflow-x-auto">
-                            <code>{comment.code}</code>
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div className="bg-muted/20 border rounded-lg p-4">
+                  <pre className="text-xs whitespace-pre-wrap font-mono">
+                    {report.prReviewComments}
+                  </pre>
                 </div>
               </div>
             )}
