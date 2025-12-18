@@ -26,8 +26,7 @@ export enum CandidateStatus {
 }
 
 export enum ReportRole {
-  PRIMARY_REVIEWER = 'PRIMARY_REVIEWER',
-  SECONDARY_REVIEWER = 'SECONDARY_REVIEWER',
+  REVIEWER = 'REVIEWER',
   FINAL = 'FINAL',
 }
 

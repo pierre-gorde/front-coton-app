@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import type { CandidateReport, ScorecardCriterion } from '@/lib/types';
+import { ReportRole } from '@/lib/types';
 import { ReviewerEvaluationCard } from './ReviewerEvaluationCard';
 import { ReviewerReportForm } from './ReviewerReportForm';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,7 @@ export function ReviewerReportSection({
         id: '',
         candidateId,
         authorUserId: reviewerUserId,
-        role: 'PRIMARY_REVIEWER',
+        role: ReportRole.REVIEWER,
         criterionScores: scorecardCriteria.map(c => ({
           criterionId: c.id,
           score: 0,

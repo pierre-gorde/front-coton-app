@@ -194,6 +194,28 @@ export async function getOrCreateReviewerReport(
 }
 
 /**
+ * Create a new reviewer report
+ */
+export async function createReviewerReport(input: {
+  candidateId: string;
+  reviewerUserId: string;
+  role: import('@/lib/types').CandidateReportRole;
+  criterionScores: CriterionScore[];
+  summary?: string;
+  positives?: string;
+  negatives?: string;
+  remarks?: string;
+  prReviewComments?: import('@/lib/types').PRReviewComment[];
+}): Promise<CandidateReport> {
+  return apiClient.createReport({
+    candidateId: input.candidateId,
+    authorUserId: input.reviewerUserId,
+    role: input.role,
+    criterionScores: input.criterionScores,
+  });
+}
+
+/**
  * Update a reviewer report. finalScore is recomputed from weighted criterion scores.
  */
 export async function updateReviewerReport(

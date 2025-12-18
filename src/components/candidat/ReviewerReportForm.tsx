@@ -18,7 +18,8 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import type { CandidateReport, ScorecardCriterion, CriterionScore, CriterionGroup, CandidateReportRole, PRReviewComment } from '@/lib/types';
-import { updateReviewerReport, computeFinalScore } from '@/lib/services/checkAdminService';
+import { ReportRole } from '@/lib/types';
+import { updateReviewerReport, createReviewerReport, computeFinalScore } from '@/lib/services/checkAdminService';
 import { PRCommentsSection } from './PRCommentsSection';
 
 interface ReviewerReportFormProps {
@@ -213,14 +214,33 @@ export function ReviewerReportForm({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await updateReviewerReport(report.id, {
-        criterionScores,
-        summary,
-        positives,
-        negatives,
-        remarks,
-        prReviewComments,
-      });
+      let updated: CandidateReport;
+
+      // If report has no ID, create new report
+      if (!report.id) {
+        updated = await createReviewerReport({
+          candidateId,
+          reviewerUserId,
+          role: ReportRole.REVIEWER,
+          criterionScores,
+          summary,
+          positives,
+          negatives,
+          remarks,
+          prReviewComments,
+        });
+      } else {
+        // Otherwise update existing report
+        updated = await updateReviewerReport(report.id, {
+          criterionScores,
+          summary,
+          positives,
+          negatives,
+          remarks,
+          prReviewComments,
+        });
+      }
+
       onReportUpdated(updated);
       toast({
         title: 'Rapport sauvegardé',
