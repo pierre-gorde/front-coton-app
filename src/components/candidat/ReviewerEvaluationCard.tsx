@@ -1,5 +1,4 @@
 import type { CandidateReport, CriterionGroup, ScorecardCriterion } from '@/lib/types';
-import { Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,6 +10,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Pencil } from 'lucide-react';
 
 interface ReviewerEvaluationCardProps {
   report: CandidateReport;
@@ -18,11 +18,6 @@ interface ReviewerEvaluationCardProps {
   scorecardCriteria: ScorecardCriterion[];
   onEdit?: () => void;
 }
-
-const roleLabels: Record<string, string> = {
-  PRIMARY_REVIEWER: 'Primary Reviewer',
-  SECONDARY_REVIEWER: 'Secondary Reviewer',
-};
 
 function getScoreColor(score: number): string {
   if (score >= 80) return 'text-green-600 dark:text-green-400';
@@ -107,7 +102,7 @@ export function ReviewerEvaluationCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="font-medium">{authorName}</span>
-          <Badge variant="secondary">{roleLabels[report.role] ?? report.role}</Badge>
+          <Badge variant="secondary">{report.role}</Badge>
         </div>
         <div className="flex items-center gap-3">
           {onEdit && (
