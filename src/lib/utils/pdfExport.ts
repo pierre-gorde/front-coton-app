@@ -43,7 +43,7 @@ export function exportFinalReportToPDF({
   doc.setFont('helvetica', 'bold');
   const scoreColor = getScoreColorRGB(report.finalScore);
   doc.setTextColor(scoreColor.r, scoreColor.g, scoreColor.b);
-  doc.text(`Score Final: ${report.finalScore}/100`, 105, yPosition, { align: 'center' });
+  doc.text(`Score Final: ${report.finalScore}/10`, 105, yPosition, { align: 'center' });
   doc.setTextColor(0, 0, 0);
   yPosition += 15;
 
@@ -140,7 +140,7 @@ export function exportFinalReportToPDF({
         return [
           criterion?.label ?? cs.criterionId,
           `${criterion?.weightPercentage ?? 0}%`,
-          `${cs.score}/100`,
+          `${cs.score}/10`,
           cs.comment || '-',
         ];
       });
@@ -180,7 +180,7 @@ export function exportFinalReportToPDF({
         return [
           criterion?.label ?? cs.criterionId,
           `${criterion?.weightPercentage ?? 0}%`,
-          `${cs.score}/100`,
+          `${cs.score}/10`,
           cs.comment || '-',
         ];
       });
@@ -217,7 +217,7 @@ export function exportFinalReportToPDF({
 }
 
 function getScoreColorRGB(score: number): { r: number; g: number; b: number } {
-  if (score >= 80) return { r: 34, g: 197, b: 94 }; // green
-  if (score >= 60) return { r: 245, g: 158, b: 11 }; // amber
+  if (score >= 8) return { r: 34, g: 197, b: 94 }; // green
+  if (score >= 6) return { r: 245, g: 158, b: 11 }; // amber
   return { r: 239, g: 68, b: 68 }; // red
 }

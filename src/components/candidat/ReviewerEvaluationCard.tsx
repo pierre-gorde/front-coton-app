@@ -20,8 +20,8 @@ interface ReviewerEvaluationCardProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600 dark:text-green-400';
-  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 8) return 'text-green-600 dark:text-green-400';
+  if (score >= 6) return 'text-amber-600 dark:text-amber-400';
   return 'text-red-600 dark:text-red-400';
 }
 
@@ -116,7 +116,7 @@ export function ReviewerEvaluationCard({
             </Button>
           )}
           <div className={`text-xl font-bold ${getScoreColor(report.finalScore)}`}>
-            {report.finalScore}/100
+            {report.finalScore}/10
           </div>
         </div>
       </div>

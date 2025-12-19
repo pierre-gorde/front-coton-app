@@ -38,8 +38,8 @@ const roleLabels: Record<CandidateReportRole, string> = {
 };
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600 dark:text-green-400';
-  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 8) return 'text-green-600 dark:text-green-400';
+  if (score >= 6) return 'text-amber-600 dark:text-amber-400';
   return 'text-red-600 dark:text-red-400';
 }
 
@@ -114,12 +114,13 @@ function CriterionGroupForm({
                     <Input
                       type="number"
                       min={0}
-                      max={100}
+                      max={10}
+                      step={0.5}
                       value={score}
-                      onChange={(e) => onScoreChange(criterion.id, Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                      onChange={(e) => onScoreChange(criterion.id, Math.min(10, Math.max(0, parseFloat(e.target.value) || 0)))}
                       className={`w-16 text-center ${getScoreColor(score)}`}
                     />
-                    <span className="text-xs text-muted-foreground">/100</span>
+                    <span className="text-xs text-muted-foreground">/10</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -217,7 +218,7 @@ export function ReviewerReportForm({
       onReportUpdated(updated);
       toast({
         title: 'Rapport sauvegardé',
-        description: `Score final: ${updated.finalScore}/100`,
+        description: `Score final: ${updated.finalScore}/10`,
       });
     } catch (error) {
       toast({
@@ -247,7 +248,7 @@ export function ReviewerReportForm({
           <div className="flex items-center gap-4">
             <div className="text-right">
               <div className={`text-2xl font-bold ${getScoreColor(liveScore)}`}>
-                {liveScore}/100
+                {liveScore}/10
               </div>
               <div className="text-xs text-muted-foreground">Score pondéré</div>
             </div>

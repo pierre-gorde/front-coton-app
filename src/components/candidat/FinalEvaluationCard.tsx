@@ -31,8 +31,8 @@ interface FinalEvaluationCardProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600 dark:text-green-400';
-  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 8) return 'text-green-600 dark:text-green-400';
+  if (score >= 6) return 'text-amber-600 dark:text-amber-400';
   return 'text-red-600 dark:text-red-400';
 }
 
@@ -220,7 +220,7 @@ export function FinalEvaluationCard({
                 <div className={`text-5xl font-bold ${getScoreColor(report.finalScore)}`}>
                   {report.finalScore}
                 </div>
-                <div className="text-sm text-muted-foreground mt-1">Score final / 100</div>
+                <div className="text-sm text-muted-foreground mt-1">Score final / 10</div>
               </div>
             </div>
 

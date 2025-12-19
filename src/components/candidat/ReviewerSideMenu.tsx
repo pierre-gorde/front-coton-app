@@ -4,10 +4,11 @@
  * Following CLAUDE.md patterns: proper state management, TypeScript typing
  */
 
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { CandidateReport, User } from '@/lib/types';
+import { CheckCircle2, Circle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface ReviewerSideMenuProps {
   reviewers: User[];
@@ -15,6 +16,25 @@ interface ReviewerSideMenuProps {
   activeReviewerId: string | null;
   onSelectReviewer: (reviewerId: string) => void;
 }
+
+export enum ReviewerStatus {
+  COMPLETED = 'completed',
+  INCOMPLETE = 'incomplete',
+  NOT_STARTED = 'not_started',
+}
+
+const getReviewerStatusLabel = (status: ReviewerStatus): string => {
+  if (status === ReviewerStatus.COMPLETED) return 'Terminé';
+  if (status === ReviewerStatus.INCOMPLETE) return 'En cours';
+  if (status === ReviewerStatus.NOT_STARTED) return 'Non démarré';
+  return 'Inconnu';
+};
+
+const getReviewerStatus = (report: CandidateReport): ReviewerStatus => {
+  if (!report) return ReviewerStatus.NOT_STARTED;
+  if (report.isValidated) return ReviewerStatus.COMPLETED;
+  return ReviewerStatus.INCOMPLETE;
+};
 
 export function ReviewerSideMenu({
   reviewers,
@@ -27,12 +47,18 @@ export function ReviewerSideMenu({
     return reports.find(r => r.authorUserId === reviewerId && r.role !== 'FINAL');
   };
 
+  const getVariant = (status: ReviewerStatus): 'success' | 'default' | 'warning' | 'destructive' => {
+    if (status === ReviewerStatus.COMPLETED) return 'success';
+    if (status === ReviewerStatus.INCOMPLETE) return 'warning';
+    if (status === ReviewerStatus.NOT_STARTED) return 'destructive';
+    return 'default';
+  };
+
   return (
     <div className="space-y-2">
       {reviewers.map((reviewer) => {
         const report = getReviewerReport(reviewer.id);
         const isActive = activeReviewerId === reviewer.id;
-        const isComplete = report?.isComplete ?? false;
 
         return (
           <button
@@ -56,17 +82,11 @@ export function ReviewerSideMenu({
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {isComplete ? (
-                  <Badge variant="default" className="text-xs">
+                
+                  <Badge variant={getVariant(getReviewerStatus(report))} className="text-xs">
                     <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Terminé
+                    {getReviewerStatusLabel(getReviewerStatus(report))}
                   </Badge>
-                ) : (
-                  <Badge variant="secondary" className="text-xs">
-                    <Circle className="h-3 w-3 mr-1" />
-                    En cours
-                  </Badge>
-                )}
               </div>
             </div>
           </button>

@@ -182,7 +182,6 @@ export default function CheckListPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold">Référence</TableHead>
                     <TableHead className="font-semibold">Poste</TableHead>
                     <TableHead className="font-semibold">Client</TableHead>
                     <TableHead className="font-semibold text-center">Candidats</TableHead>
@@ -197,11 +196,6 @@ export default function CheckListPage() {
                       className="hover:bg-muted/30 cursor-pointer transition-colors"
                       onClick={() => handleRowClick(mission.id)}
                     >
-                      <TableCell>
-                        <span className="font-mono text-sm text-muted-foreground">
-                          {mission.id}
-                        </span>
-                      </TableCell>
                       <TableCell>
                         <span className="font-medium text-foreground">
                           {mission.title}

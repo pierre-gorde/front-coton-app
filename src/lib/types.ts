@@ -212,7 +212,6 @@ export interface CandidateReport {
   negativePoints: string; // string of negative points
   remarks: string; // rich text as string
   prReviewComments?: string; // string of code review comments from GitHub PRs
-  isComplete?: boolean; // Backend-computed completion status
   isValidated?: boolean; // Only for FINAL reports - marks as ready for PDF export
   createdAt: string;
   updatedAt: string;
