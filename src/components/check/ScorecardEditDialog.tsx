@@ -96,8 +96,8 @@ export function ScorecardEditDialog({
       if (!open) return;
 
       try {
-        const { getDomains, getExpertisesByDomain } = await import('@/lib/services/checkAdminService');
-        const domains = await getDomains();
+        const { listDomains, getExpertisesByDomain } = await import('@/lib/api/scorecardTemplates');
+        const domains = await listDomains();
 
         const suggestions: Record<string, string[]> = {};
         for (const domain of domains) {
