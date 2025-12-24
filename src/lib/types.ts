@@ -134,6 +134,46 @@ export interface ScorecardSuggestionRule {
   }>;
 }
 
+// ----- Scorecard Templates (from API/BDD) -----
+
+export interface Domain {
+  id: string;
+  name: string;
+  archived: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Expertise {
+  id: string;
+  domainId: string;
+  name: string;
+  domain?: Domain;
+  archived?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CriterionTemplate {
+  id: string;
+  domainId: string;
+  minLevel: SkillLevel;
+  label: string;
+  group: CriterionGroup;
+  weightPercentage: number;
+  description?: string;
+  domain?: Domain;
+  archived?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GenerateCriteriaInput {
+  domainName: string;
+  percentage: number;
+  level: SkillLevel;
+}
+
 export interface Scorecard {
   id: string;
   checkMissionId: string;

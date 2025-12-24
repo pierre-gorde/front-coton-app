@@ -2,10 +2,11 @@
 // COTON Check > ADMIN - Service Layer
 // ===========================================
 
-import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, Scorecard, ScorecardCriterion, User } from '@/lib/types';
+import type { Candidate, CandidateEvaluationView, CandidateReport, CandidateReportRole, CheckMission, Client, CriterionScore, Scorecard, ScorecardCriterion, User, Domain, Expertise, CriterionTemplate, GenerateCriteriaInput } from '@/lib/types';
 
 import type { ReportUpdatePayload } from '@/lib/api/contracts';
 import { realCheckAdminClient as apiClient } from '@/lib/api/realClient';
+import * as scorecardTemplatesApi from '@/lib/api/scorecardTemplates';
 
 export interface CheckMissionWithClient extends CheckMission {
   client: Client | undefined;
@@ -286,4 +287,37 @@ export async function generateFinalReport(
   _authorUserId: string // Keep for backward compatibility but unused
 ): Promise<CandidateReport> {
   return apiClient.generateFinalReport(candidateId);
+}
+
+// ----- Scorecard Templates -----
+
+/**
+ * Get all domains
+ */
+export async function getDomains(): Promise<Domain[]> {
+  return scorecardTemplatesApi.listDomains();
+}
+
+/**
+ * Get expertises for a specific domain
+ */
+export async function getExpertisesByDomain(domainId: string): Promise<Expertise[]> {
+  return scorecardTemplatesApi.getExpertisesByDomain(domainId);
+}
+
+/**
+ * Create a new expertise (auto-created when user types a new one)
+ */
+export async function createExpertise(domainId: string, name: string): Promise<Expertise> {
+  return scorecardTemplatesApi.createExpertise(domainId, name);
+}
+
+/**
+ * Generate scorecard criteria from domain inputs using API
+ * Replaces the old hardcoded generator
+ */
+export async function generateScorecardCriteria(
+  domainInputs: GenerateCriteriaInput[]
+): Promise<ScorecardCriterion[]> {
+  return scorecardTemplatesApi.generateScorecardCriteria(domainInputs);
 }

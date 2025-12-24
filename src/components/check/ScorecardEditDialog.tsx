@@ -253,23 +253,37 @@ export function ScorecardEditDialog({
     try {
       setIsGenerating(true);
 
-      // Import generation function
-      const { generateScorecardFromDomains } = await import('@/lib/utils/scorecardGenerator');
+      // Map domainRatios to API input format (without expertiseRatios)
+      const { generateScorecardCriteria } = await import('@/lib/services/checkAdminService');
+      const domainInputs = domainRatios.map(dr => ({
+        domainName: dr.domainName,
+        percentage: dr.percentage,
+        level: dr.level,
+      }));
 
-      const criteria = generateScorecardFromDomains(domainRatios);
+      const criteria = await generateScorecardCriteria(domainInputs);
+
+      if (criteria.length === 0) {
+        toast({
+          title: 'Attention',
+          description: 'Aucun template trouvé en BDD pour ces domaines. Vous devrez créer les critères manuellement.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Succès',
+          description: `${criteria.length} critères générés avec succès`,
+          variant: 'success',
+        });
+      }
+
       setGeneratedCriteria(criteria);
       setShowPreview(true);
-
-      toast({
-        title: 'Succès',
-        description: `${criteria.length} critères générés avec succès`,
-        variant: 'success',
-      });
     } catch (error) {
       console.error('Failed to generate criteria:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de générer les critères',
+        description: 'Impossible de générer les critères depuis l\'API',
         variant: 'destructive',
       });
     } finally {
