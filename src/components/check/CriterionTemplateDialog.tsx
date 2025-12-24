@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { Domain, CriterionTemplate, SkillLevel, CriterionGroup } from '@/lib/types';
+import type { Domain, Expertise, CriterionTemplate, SkillLevel, CriterionGroup } from '@/lib/types';
 import * as scorecardApi from '@/lib/api/scorecardTemplates';
 
 interface CriterionTemplateDialogProps {
@@ -32,6 +32,7 @@ interface CriterionTemplateDialogProps {
   onOpenChange: (open: boolean) => void;
   template?: CriterionTemplate;
   domains: Domain[];
+  expertises: Expertise[];
   onSuccess: () => void;
 }
 
@@ -43,10 +44,12 @@ export function CriterionTemplateDialog({
   onOpenChange,
   template,
   domains,
+  expertises,
   onSuccess,
 }: CriterionTemplateDialogProps) {
   const { toast } = useToast();
   const [domainId, setDomainId] = useState('');
+  const [expertiseId, setExpertiseId] = useState('');
   const [minLevel, setMinLevel] = useState<SkillLevel>('JUNIOR');
   const [label, setLabel] = useState('');
   const [group, setGroup] = useState<CriterionGroup>('PRIMARY');
@@ -56,9 +59,18 @@ export function CriterionTemplateDialog({
 
   const isEdit = !!template;
 
+  // Filter expertises by selected domain
+  const filteredExpertises = domainId
+    ? expertises.filter(e => e.domainId === domainId)
+    : [];
+
   useEffect(() => {
     if (template) {
-      setDomainId(template.domainId);
+      const expertise = expertises.find(e => e.id === template.expertiseId);
+      if (expertise) {
+        setDomainId(expertise.domainId);
+        setExpertiseId(template.expertiseId);
+      }
       setMinLevel(template.minLevel);
       setLabel(template.label);
       setGroup(template.group);
@@ -66,13 +78,20 @@ export function CriterionTemplateDialog({
       setDescription(template.description || '');
     } else {
       setDomainId('');
+      setExpertiseId('');
       setMinLevel('JUNIOR');
       setLabel('');
       setGroup('PRIMARY');
       setWeightPercentage('10');
       setDescription('');
     }
-  }, [template, open]);
+  }, [template, open, expertises]);
+
+  // Reset expertise when domain changes
+  const handleDomainChange = (newDomainId: string) => {
+    setDomainId(newDomainId);
+    setExpertiseId(''); // Reset expertise selection
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +101,15 @@ export function CriterionTemplateDialog({
       toast({
         title: 'Erreur',
         description: 'Le domaine est requis',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!expertiseId) {
+      toast({
+        title: 'Erreur',
+        description: 'L\'expertise est requise',
         variant: 'destructive',
       });
       return;
@@ -123,7 +151,7 @@ export function CriterionTemplateDialog({
         });
       } else {
         await scorecardApi.createCriterionTemplate({
-          domainId,
+          expertiseId,
           minLevel,
           label: label.trim(),
           group,
@@ -166,7 +194,7 @@ export function CriterionTemplateDialog({
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="grid gap-2">
               <Label htmlFor="domain">Domaine</Label>
-              <Select value={domainId} onValueChange={setDomainId} disabled={isLoading || isEdit}>
+              <Select value={domainId} onValueChange={handleDomainChange} disabled={isLoading || isEdit}>
                 <SelectTrigger id="domain">
                   <SelectValue placeholder="Sélectionner un domaine" />
                 </SelectTrigger>
@@ -181,6 +209,27 @@ export function CriterionTemplateDialog({
               {isEdit && (
                 <p className="text-xs text-muted-foreground">
                   Le domaine ne peut pas être modifié
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="expertise">Expertise</Label>
+              <Select value={expertiseId} onValueChange={setExpertiseId} disabled={isLoading || isEdit || !domainId}>
+                <SelectTrigger id="expertise">
+                  <SelectValue placeholder={domainId ? "Sélectionner une expertise" : "Sélectionner d'abord un domaine"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredExpertises.map((expertise) => (
+                    <SelectItem key={expertise.id} value={expertise.id}>
+                      {expertise.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isEdit && (
+                <p className="text-xs text-muted-foreground">
+                  L'expertise ne peut pas être modifiée
                 </p>
               )}
             </div>

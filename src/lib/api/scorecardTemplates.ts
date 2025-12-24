@@ -77,8 +77,16 @@ export async function getCriterionTemplatesByDomain(
   return api.get<CriterionTemplate[]>(`/admin/domains/${domainId}/criterion-templates${params}`);
 }
 
+export async function getCriterionTemplatesByExpertise(
+  expertiseId: string,
+  minLevel?: string
+): Promise<CriterionTemplate[]> {
+  const params = minLevel ? `?minLevel=${minLevel}` : '';
+  return api.get<CriterionTemplate[]>(`/admin/expertises/${expertiseId}/criterion-templates${params}`);
+}
+
 export async function createCriterionTemplate(data: {
-  domainId: string;
+  expertiseId: string;
   minLevel: string;
   label: string;
   group: string;

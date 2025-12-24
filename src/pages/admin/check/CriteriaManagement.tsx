@@ -97,7 +97,11 @@ export default function CriteriaManagementPage() {
 
   const handleDeleteDomain = (domain: Domain) => {
     const expertiseCount = expertises.filter(e => e.domainId === domain.id).length;
-    const templateCount = templates.filter(t => t.domainId === domain.id).length;
+    // Count templates through expertises
+    const templateCount = templates.filter(t => {
+      const expertise = expertises.find(e => e.id === t.expertiseId);
+      return expertise?.domainId === domain.id;
+    }).length;
 
     if (expertiseCount > 0 || templateCount > 0) {
       toast({
@@ -123,6 +127,17 @@ export default function CriteriaManagementPage() {
   };
 
   const handleDeleteExpertise = (expertise: Expertise) => {
+    const templateCount = templates.filter(t => t.expertiseId === expertise.id).length;
+
+    if (templateCount > 0) {
+      toast({
+        title: 'Impossible de supprimer',
+        description: `Cette expertise contient ${templateCount} template(s). Supprimez-les d'abord.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setDeleteTarget({ type: 'expertise', id: expertise.id, name: expertise.name });
     setDeleteDialogOpen(true);
   };
@@ -240,16 +255,23 @@ export default function CriteriaManagementPage() {
               </div>
 
               <div className="grid gap-4">
-                {domains.map((domain) => (
-                  <Card key={domain.id} className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">{domain.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {expertises.filter(e => e.domainId === domain.id).length} expertises,{' '}
-                          {templates.filter(t => t.domainId === domain.id).length} templates
-                        </p>
-                      </div>
+                {domains.map((domain) => {
+                  const domainExpertises = expertises.filter(e => e.domainId === domain.id);
+                  const templateCount = templates.filter(t => {
+                    const expertise = expertises.find(e => e.id === t.expertiseId);
+                    return expertise?.domainId === domain.id;
+                  }).length;
+
+                  return (
+                    <Card key={domain.id} className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{domain.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {domainExpertises.length} expertises,{' '}
+                            {templateCount} templates
+                          </p>
+                        </div>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" onClick={() => handleEditDomain(domain)}>
                           <Pencil className="h-4 w-4" />
@@ -265,7 +287,8 @@ export default function CriteriaManagementPage() {
                       </div>
                     </div>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </TabsContent>
 
@@ -283,13 +306,15 @@ export default function CriteriaManagementPage() {
               <div className="grid gap-4">
                 {expertises.map((expertise) => {
                   const domain = domains.find(d => d.id === expertise.domainId);
+                  const templateCount = templates.filter(t => t.expertiseId === expertise.id).length;
+
                   return (
                     <Card key={expertise.id} className="p-4">
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-medium">{expertise.name}</h4>
                           <p className="text-sm text-muted-foreground">
-                            Domaine: {domain?.name || 'Inconnu'}
+                            Domaine: {domain?.name || 'Inconnu'} • {templateCount} templates
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -325,17 +350,12 @@ export default function CriteriaManagementPage() {
 
               <div className="space-y-6">
                 {domains.map((domain) => {
-                  const domainTemplates = templates.filter(t => t.domainId === domain.id);
+                  const domainExpertises = expertises.filter(e => e.domainId === domain.id);
+                  const domainTemplates = templates.filter(t => {
+                    const expertise = expertises.find(e => e.id === t.expertiseId);
+                    return expertise?.domainId === domain.id;
+                  });
                   if (domainTemplates.length === 0) return null;
-
-                  // Group by minLevel
-                  const templatesByLevel = domainTemplates.reduce((acc, template) => {
-                    if (!acc[template.minLevel]) {
-                      acc[template.minLevel] = [];
-                    }
-                    acc[template.minLevel].push(template);
-                    return acc;
-                  }, {} as Record<string, CriterionTemplate[]>);
 
                   const levels = ['JUNIOR', 'MEDIOR', 'SENIOR', 'EXPERT'];
 
@@ -345,66 +365,95 @@ export default function CriteriaManagementPage() {
                       <div className="bg-muted/50 px-4 py-3 border-b">
                         <h3 className="font-semibold text-lg">{domain.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {domainTemplates.length} critères au total
+                          {domainExpertises.length} expertises • {domainTemplates.length} critères au total
                         </p>
                       </div>
 
-                      {/* Levels */}
+                      {/* Expertises */}
                       <div className="divide-y">
-                        {levels.map((level) => {
-                          const levelTemplates = templatesByLevel[level];
-                          if (!levelTemplates || levelTemplates.length === 0) return null;
+                        {domainExpertises.map((expertise) => {
+                          const expertiseTemplates = templates.filter(t => t.expertiseId === expertise.id);
+                          if (expertiseTemplates.length === 0) return null;
+
+                          // Group by minLevel
+                          const templatesByLevel = expertiseTemplates.reduce((acc, template) => {
+                            if (!acc[template.minLevel]) {
+                              acc[template.minLevel] = [];
+                            }
+                            acc[template.minLevel].push(template);
+                            return acc;
+                          }, {} as Record<string, CriterionTemplate[]>);
 
                           return (
-                            <div key={level} className="p-4">
-                              {/* Level Header */}
+                            <div key={expertise.id} className="p-4">
+                              {/* Expertise Header */}
                               <div className="flex items-center gap-2 mb-3">
-                                <span className="text-sm font-semibold text-primary uppercase">
-                                  {level}
-                                </span>
+                                <span className="text-base font-semibold">{expertise.name}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  ({levelTemplates.length} critères)
+                                  ({expertiseTemplates.length} critères)
                                 </span>
                               </div>
 
-                              {/* Criteria */}
-                              <div className="space-y-2 ml-4">
-                                {levelTemplates.map((template) => (
-                                  <div
-                                    key={template.id}
-                                    className="flex items-start justify-between gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <h4 className="font-medium text-sm">{template.label}</h4>
-                                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
-                                          {template.group}
+                              {/* Levels */}
+                              <div className="space-y-3 ml-4">
+                                {levels.map((level) => {
+                                  const levelTemplates = templatesByLevel[level];
+                                  if (!levelTemplates || levelTemplates.length === 0) return null;
+
+                                  return (
+                                    <div key={level}>
+                                      {/* Level Header */}
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-xs font-semibold text-primary uppercase">
+                                          {level}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                          Poids: {template.weightPercentage}%
+                                          ({levelTemplates.length} critères)
                                         </span>
                                       </div>
-                                      {template.description && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                          {template.description}
-                                        </p>
-                                      )}
+
+                                      {/* Criteria */}
+                                      <div className="space-y-2 ml-4">
+                                        {levelTemplates.map((template) => (
+                                          <div
+                                            key={template.id}
+                                            className="flex items-start justify-between gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                                          >
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="font-medium text-sm">{template.label}</h4>
+                                                <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                                                  {template.group}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                  Poids: {template.weightPercentage}%
+                                                </span>
+                                              </div>
+                                              {template.description && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                  {template.description}
+                                                </p>
+                                              )}
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              <Button variant="ghost" size="sm" onClick={() => handleEditTemplate(template)}>
+                                                <Pencil className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDeleteTemplate(template)}
+                                                className="text-destructive hover:text-destructive"
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <Button variant="ghost" size="sm" onClick={() => handleEditTemplate(template)}>
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDeleteTemplate(template)}
-                                        className="text-destructive hover:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           );
@@ -448,6 +497,7 @@ export default function CriteriaManagementPage() {
         onOpenChange={setTemplateDialogOpen}
         template={editingTemplate}
         domains={domains}
+        expertises={expertises}
         onSuccess={loadData}
       />
 

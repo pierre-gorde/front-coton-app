@@ -156,13 +156,13 @@ export interface Expertise {
 
 export interface CriterionTemplate {
   id: string;
-  domainId: string;
+  expertiseId: string;
   minLevel: SkillLevel;
   label: string;
   group: CriterionGroup;
   weightPercentage: number;
   description?: string;
-  domain?: Domain;
+  expertise?: Expertise;
   archived?: boolean;
   createdAt?: string;
   updatedAt?: string;
