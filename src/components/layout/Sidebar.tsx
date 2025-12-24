@@ -133,13 +133,21 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
                 // If item has children, render as nested submenu
                 if (item.children) {
+                  // Check if any child is active
+                  const hasActiveChild = item.children.some(child =>
+                    location.pathname === child.href ||
+                    (child.href !== '/dashboard' && child.href && location.pathname.startsWith(child.href))
+                  );
+
                   return (
                     <div key={item.label} className="space-y-1">
                       {/* Parent item (non-clickable label) */}
                       <div
                         className={cn(
                           'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
-                          'text-sidebar-muted/80'
+                          hasActiveChild
+                            ? 'text-sidebar-accent-foreground font-semibold'
+                            : 'text-sidebar-muted/80'
                         )}
                         title={collapsed ? item.label : undefined}
                       >
