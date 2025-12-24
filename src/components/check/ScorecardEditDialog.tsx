@@ -84,7 +84,12 @@ export function ScorecardEditDialog({
   // Initialize with existing data if available
   useEffect(() => {
     if (open && mission.scorecard?.domainRatios) {
-      setDomainRatios(mission.scorecard.domainRatios);
+      // Ensure all domains have expertiseRatios array (backward compatibility)
+      const normalizedDomains = mission.scorecard.domainRatios.map(domain => ({
+        ...domain,
+        expertiseRatios: domain.expertiseRatios || []
+      }));
+      setDomainRatios(normalizedDomains);
       setGeneratedCriteria(mission.scorecard.scorecardCriteria || []);
       setShowPreview(true);
     }
@@ -225,6 +230,12 @@ export function ScorecardEditDialog({
   const addExpertise = (domainIndex: number) => {
     const updated = [...domainRatios];
     const domain = updated[domainIndex];
+
+    // Ensure expertiseRatios exists
+    if (!domain.expertiseRatios) {
+      domain.expertiseRatios = [];
+    }
+
     const templates = DOMAIN_TEMPLATES[domain.domainName as keyof typeof DOMAIN_TEMPLATES] || [];
     const usedNames = domain.expertiseRatios.map(e => e.name);
     const available = templates.filter(name => !usedNames.includes(name));
@@ -248,6 +259,9 @@ export function ScorecardEditDialog({
 
   const removeExpertise = (domainIndex: number, expertiseIndex: number) => {
     const updated = [...domainRatios];
+    if (!updated[domainIndex].expertiseRatios) {
+      updated[domainIndex].expertiseRatios = [];
+    }
     updated[domainIndex].expertiseRatios = updated[domainIndex].expertiseRatios.filter(
       (_, i) => i !== expertiseIndex
     );
@@ -261,6 +275,9 @@ export function ScorecardEditDialog({
     value: any
   ) => {
     const updated = [...domainRatios];
+    if (!updated[domainIndex].expertiseRatios) {
+      updated[domainIndex].expertiseRatios = [];
+    }
     updated[domainIndex].expertiseRatios[expertiseIndex] = {
       ...updated[domainIndex].expertiseRatios[expertiseIndex],
       [field]: value,
@@ -396,7 +413,7 @@ export function ScorecardEditDialog({
 
         const existingSuggestions = expertiseSuggestions[domainRatio.domainName] || [];
 
-        for (const expertise of domainRatio.expertiseRatios) {
+        for (const expertise of (domainRatio.expertiseRatios || [])) {
           const expertiseName = expertise.name.trim();
           if (expertiseName && !existingSuggestions.includes(expertiseName)) {
             // This is a new expertise, create it in BDD
@@ -572,7 +589,7 @@ export function ScorecardEditDialog({
                     </Button>
                   </div>
 
-                  {domain.expertiseRatios.map((expertise, expertiseIndex) => {
+                  {(domain.expertiseRatios || []).map((expertise, expertiseIndex) => {
                     const domainSuggestions = expertiseSuggestions[domain.domainName] || [];
                     const datalistId = `expertise-suggestions-${domainIndex}-${expertiseIndex}`;
 
@@ -626,7 +643,7 @@ export function ScorecardEditDialog({
                           variant="ghost"
                           size="icon"
                           onClick={() => removeExpertise(domainIndex, expertiseIndex)}
-                          disabled={domain.expertiseRatios.length === 1}
+                          disabled={(domain.expertiseRatios || []).length === 1}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
