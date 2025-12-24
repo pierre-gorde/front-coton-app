@@ -168,8 +168,8 @@ export default function CandidatDetailPage() {
 
   const breadcrumbItems = [
     { label: 'Admin', href: '/dashboard' },
-    { label: 'COTON Check', href: '/dashboard/admin/check' },
-    { label: mission.title, href: `/dashboard/admin/check/${mission.id}` },
+    { label: 'COTON Check', href: '/dashboard/admin/check/missions' },
+    { label: mission.title, href: `/dashboard/admin/check/missions/${mission.id}` },
     { label: `${candidateUser?.firstName} ${candidateUser?.lastName}`, isCurrent: true },
   ];
 
@@ -216,7 +216,7 @@ export default function CandidatDetailPage() {
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Mission:</span>
                 <Link
-                  to={`/dashboard/admin/check/${mission.id}`}
+                  to={`/dashboard/admin/check/missions/${mission.id}`}
                   className="text-primary hover:underline font-medium"
                 >
                   {mission.title}

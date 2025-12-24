@@ -51,8 +51,8 @@ const App = () => (
                 <Route index element={<DashboardPage />} />
 
                 {/* Admin routes */}
-                <Route path="admin/check" element={<CheckListPage />} />
-                <Route path="admin/check/:checkId" element={<CheckDetailPage />} />
+                <Route path="admin/check/missions" element={<CheckListPage />} />
+                <Route path="admin/check/missions/:checkId" element={<CheckDetailPage />} />
                 <Route path="admin/check/criteria" element={<CriteriaManagementPage />} />
                 <Route path="admin/client/:clientId" element={<ClientDetailPage />} />
                 <Route path="admin/freelance/:userId" element={<FreelanceDetailPage />} />

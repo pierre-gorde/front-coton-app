@@ -45,7 +45,7 @@ const navGroups: NavGroup[] = [
         icon: ClipboardCheck,
         roles: [RoleEnum.ADMIN],
         children: [
-          { label: 'Missions', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
+          { label: 'Missions', href: '/dashboard/admin/check/missions', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
           { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: [RoleEnum.ADMIN] },
           { label: 'Critères', href: '/dashboard/admin/check/criteria', icon: ListChecks, roles: [RoleEnum.ADMIN] },
         ],

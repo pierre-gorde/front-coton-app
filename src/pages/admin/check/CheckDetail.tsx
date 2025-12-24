@@ -86,7 +86,7 @@ export default function CheckDetailPage() {
 
   const breadcrumbItems = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'COTON Check', href: '/dashboard/admin/check' },
+    { label: 'COTON Check', href: '/dashboard/admin/check/missions' },
     { label: detail?.mission.title ?? `Poste ${checkId}`, isCurrent: true },
   ];
 

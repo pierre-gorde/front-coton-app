@@ -71,7 +71,7 @@ export default function CheckListPage() {
       });
 
       // Navigate to mission detail page
-      navigate(`/dashboard/admin/check/${newMission.id}`);
+      navigate(`/dashboard/admin/check/missions/${newMission.id}`);
     } catch (error) {
       console.error('Failed to create mission:', error);
       toast({
@@ -94,7 +94,7 @@ export default function CheckListPage() {
   });
 
   const handleRowClick = (missionId: string) => {
-    navigate(`/dashboard/admin/check/${missionId}`);
+    navigate(`/dashboard/admin/check/missions/${missionId}`);
   };
 
   const formatDate = (dateString: string) => {

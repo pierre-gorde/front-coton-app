@@ -22,7 +22,7 @@ export default function CriteriaManagementPage() {
 
   const breadcrumbItems = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'COTON Check', href: '/dashboard/admin/check' },
+    { label: 'COTON Check', href: '/dashboard/admin/check/missions' },
     { label: 'Gestion des critères', isCurrent: true },
   ];
 

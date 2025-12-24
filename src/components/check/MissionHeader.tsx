@@ -180,7 +180,7 @@ export function MissionHeader({ mission, client, onUpdate }: MissionHeaderProps)
       });
 
       // Redirect to mission list
-      navigate('/dashboard/admin/check');
+      navigate('/dashboard/admin/check/missions');
     } catch (error) {
       console.error('Failed to delete mission:', error);
       toast({
