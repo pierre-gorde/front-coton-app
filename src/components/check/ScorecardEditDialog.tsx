@@ -78,6 +78,9 @@ export function ScorecardEditDialog({
   const [generatedCriteria, setGeneratedCriteria] = useState<ScorecardCriterion[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
+  // State for expertise suggestions from BDD
+  const [expertiseSuggestions, setExpertiseSuggestions] = useState<Record<string, string[]>>({});
+
   // Initialize with existing data if available
   useEffect(() => {
     if (open && mission.scorecard?.domainRatios) {
@@ -86,6 +89,31 @@ export function ScorecardEditDialog({
       setShowPreview(true);
     }
   }, [open, mission.scorecard]);
+
+  // Load expertise suggestions from API when dialog opens
+  useEffect(() => {
+    const loadExpertiseSuggestions = async () => {
+      if (!open) return;
+
+      try {
+        const { getDomains, getExpertisesByDomain } = await import('@/lib/services/checkAdminService');
+        const domains = await getDomains();
+
+        const suggestions: Record<string, string[]> = {};
+        for (const domain of domains) {
+          const expertises = await getExpertisesByDomain(domain.id);
+          suggestions[domain.name] = expertises.map(e => e.name);
+        }
+
+        setExpertiseSuggestions(suggestions);
+      } catch (error) {
+        console.error('Failed to load expertise suggestions:', error);
+        // Silent fail - user can still type freely
+      }
+    };
+
+    loadExpertiseSuggestions();
+  }, [open]);
 
   const totalPercentage = domainRatios.reduce((sum, d) => sum + d.percentage, 0);
   const isValidTotal = totalPercentage === 100;
@@ -358,7 +386,30 @@ export function ScorecardEditDialog({
     try {
       setIsLoading(true);
 
-      const { upsertScorecard } = await import('@/lib/services/checkAdminService');
+      const { upsertScorecard, getDomains, createExpertise } = await import('@/lib/services/checkAdminService');
+
+      // Auto-create new expertises in BDD if they don't exist
+      const domains = await getDomains();
+      for (const domainRatio of domainRatios) {
+        const domain = domains.find(d => d.name === domainRatio.domainName);
+        if (!domain) continue;
+
+        const existingSuggestions = expertiseSuggestions[domainRatio.domainName] || [];
+
+        for (const expertise of domainRatio.expertiseRatios) {
+          const expertiseName = expertise.name.trim();
+          if (expertiseName && !existingSuggestions.includes(expertiseName)) {
+            // This is a new expertise, create it in BDD
+            try {
+              await createExpertise(domain.id, expertiseName);
+              console.log(`Created new expertise: ${expertiseName} for domain ${domainRatio.domainName}`);
+            } catch (error) {
+              console.error(`Failed to create expertise ${expertiseName}:`, error);
+              // Continue anyway - not critical
+            }
+          }
+        }
+      }
 
       const scorecardData = {
         id: mission.scorecard?.id || `sc_${Date.now()}`,
@@ -521,54 +572,67 @@ export function ScorecardEditDialog({
                     </Button>
                   </div>
 
-                  {domain.expertiseRatios.map((expertise, expertiseIndex) => (
-                    <div key={expertiseIndex} className="flex items-center gap-2">
-                      <Input
-                        placeholder="Nom de l'expertise"
-                        value={expertise.name}
-                        onChange={(e) =>
-                          updateExpertise(domainIndex, expertiseIndex, 'name', e.target.value)
-                        }
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={expertise.percentage}
-                        onChange={(e) =>
-                          updateExpertise(domainIndex, expertiseIndex, 'percentage', parseInt(e.target.value) || 0)
-                        }
-                        className="w-20"
-                      />
-                      <Select
-                        value={expertise.level}
-                        onValueChange={(value) =>
-                          updateExpertise(domainIndex, expertiseIndex, 'level', value)
-                        }
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SKILL_LEVELS.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeExpertise(domainIndex, expertiseIndex)}
-                        disabled={domain.expertiseRatios.length === 1}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
+                  {domain.expertiseRatios.map((expertise, expertiseIndex) => {
+                    const domainSuggestions = expertiseSuggestions[domain.domainName] || [];
+                    const datalistId = `expertise-suggestions-${domainIndex}-${expertiseIndex}`;
+
+                    return (
+                      <div key={expertiseIndex} className="flex items-center gap-2">
+                        <div className="flex-1 relative">
+                          <Input
+                            placeholder="Nom de l'expertise"
+                            value={expertise.name}
+                            onChange={(e) =>
+                              updateExpertise(domainIndex, expertiseIndex, 'name', e.target.value)
+                            }
+                            list={datalistId}
+                            className="flex-1"
+                          />
+                          <datalist id={datalistId}>
+                            {domainSuggestions.map((suggestion) => (
+                              <option key={suggestion} value={suggestion} />
+                            ))}
+                          </datalist>
+                        </div>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={expertise.percentage}
+                          onChange={(e) =>
+                            updateExpertise(domainIndex, expertiseIndex, 'percentage', parseInt(e.target.value) || 0)
+                          }
+                          className="w-20"
+                        />
+                        <Select
+                          value={expertise.level}
+                          onValueChange={(value) =>
+                            updateExpertise(domainIndex, expertiseIndex, 'level', value)
+                          }
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SKILL_LEVELS.map((level) => (
+                              <SelectItem key={level} value={level}>
+                                {level}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeExpertise(domainIndex, expertiseIndex)}
+                          disabled={domain.expertiseRatios.length === 1}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
