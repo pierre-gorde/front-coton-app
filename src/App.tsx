@@ -14,6 +14,7 @@ import { AuthVerify } from "@/pages/AuthVerify";
 import DashboardPage from "@/pages/Dashboard";
 import CheckListPage from "@/pages/admin/check/CheckList";
 import CheckDetailPage from "@/pages/admin/check/CheckDetail";
+import CriteriaManagementPage from "@/pages/admin/check/CriteriaManagement";
 import ClientDetailPage from "@/pages/admin/ClientDetail";
 import FreelanceDetailPage from "@/pages/admin/FreelanceDetail";
 import CandidatDetailPage from "@/pages/admin/CandidatDetail";
@@ -52,6 +53,7 @@ const App = () => (
                 {/* Admin routes */}
                 <Route path="admin/check" element={<CheckListPage />} />
                 <Route path="admin/check/:checkId" element={<CheckDetailPage />} />
+                <Route path="admin/check/criteria" element={<CriteriaManagementPage />} />
                 <Route path="admin/client/:clientId" element={<ClientDetailPage />} />
                 <Route path="admin/freelance/:userId" element={<FreelanceDetailPage />} />
                 <Route path="admin/candidat/:candidatId" element={<CandidatDetailPage />} />

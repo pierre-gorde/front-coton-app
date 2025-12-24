@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Briefcase,
   FileText,
+  ListChecks,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -36,10 +37,17 @@ const navGroups: NavGroup[] = [
     label: 'Administration',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: [RoleEnum.ADMIN] },
-      { label: 'COTON Check', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
       { label: 'Clients', href: '/dashboard/admin/clients', icon: Building2, roles: [RoleEnum.ADMIN] },
       { label: 'Freelances', href: '/dashboard/admin/freelances', icon: Users, roles: [RoleEnum.ADMIN] },
+    ],
+  },
+  {
+    role: RoleEnum.ADMIN,
+    label: 'COTON Check',
+    items: [
+      { label: 'Missions', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
       { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: [RoleEnum.ADMIN] },
+      { label: 'Critères', href: '/dashboard/admin/check/criteria', icon: ListChecks, roles: [RoleEnum.ADMIN] },
     ],
   },
   {
