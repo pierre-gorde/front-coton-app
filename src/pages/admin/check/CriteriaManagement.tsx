@@ -161,7 +161,7 @@ export default function CriteriaManagementPage() {
             <TabsContent value="templates" className="space-y-4 mt-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
-                  Les templates de critères utilisés pour générer les scorecards
+                  Les templates de critères organisés par domaine et niveau
                 </p>
                 <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
@@ -169,39 +169,94 @@ export default function CriteriaManagementPage() {
                 </Button>
               </div>
 
-              <div className="grid gap-4">
-                {templates.map((template) => {
-                  const domain = domains.find(d => d.id === template.domainId);
+              <div className="space-y-6">
+                {domains.map((domain) => {
+                  const domainTemplates = templates.filter(t => t.domainId === domain.id);
+                  if (domainTemplates.length === 0) return null;
+
+                  // Group by minLevel
+                  const templatesByLevel = domainTemplates.reduce((acc, template) => {
+                    if (!acc[template.minLevel]) {
+                      acc[template.minLevel] = [];
+                    }
+                    acc[template.minLevel].push(template);
+                    return acc;
+                  }, {} as Record<string, CriterionTemplate[]>);
+
+                  const levels = ['JUNIOR', 'MEDIOR', 'SENIOR', 'EXPERT'];
+
                   return (
-                    <Card key={template.id} className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{template.label}</h4>
-                            <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary">
-                              {template.group}
-                            </span>
-                            <span className="text-xs px-2 py-1 rounded bg-secondary">
-                              {template.minLevel}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                            <span>Domaine: {domain?.name || 'Inconnu'}</span>
-                            <span>Poids: {template.weightPercentage}%</span>
-                          </div>
-                          {template.description && (
-                            <p className="text-sm text-muted-foreground mt-2">
-                              {template.description}
-                            </p>
-                          )}
-                        </div>
-                        <Button variant="outline" size="sm">
-                          Modifier
-                        </Button>
+                    <Card key={domain.id} className="overflow-hidden">
+                      {/* Domain Header */}
+                      <div className="bg-muted/50 px-4 py-3 border-b">
+                        <h3 className="font-semibold text-lg">{domain.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {domainTemplates.length} critères au total
+                        </p>
+                      </div>
+
+                      {/* Levels */}
+                      <div className="divide-y">
+                        {levels.map((level) => {
+                          const levelTemplates = templatesByLevel[level];
+                          if (!levelTemplates || levelTemplates.length === 0) return null;
+
+                          return (
+                            <div key={level} className="p-4">
+                              {/* Level Header */}
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-sm font-semibold text-primary uppercase">
+                                  {level}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({levelTemplates.length} critères)
+                                </span>
+                              </div>
+
+                              {/* Criteria */}
+                              <div className="space-y-2 ml-4">
+                                {levelTemplates.map((template) => (
+                                  <div
+                                    key={template.id}
+                                    className="flex items-start justify-between gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className="font-medium text-sm">{template.label}</h4>
+                                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                                          {template.group}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          Poids: {template.weightPercentage}%
+                                        </span>
+                                      </div>
+                                      {template.description && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          {template.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <Button variant="ghost" size="sm" className="shrink-0">
+                                      Modifier
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </Card>
                   );
                 })}
+
+                {templates.length === 0 && (
+                  <Card className="p-8">
+                    <p className="text-center text-muted-foreground">
+                      Aucun template de critère configuré
+                    </p>
+                  </Card>
+                )}
               </div>
             </TabsContent>
           </Tabs>
