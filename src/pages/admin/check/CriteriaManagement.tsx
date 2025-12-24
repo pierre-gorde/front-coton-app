@@ -340,12 +340,22 @@ export default function CriteriaManagementPage() {
             <TabsContent value="templates" className="space-y-4 mt-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
-                  Les templates de critères organisés par domaine et niveau
+                  Les templates de critères organisés par domaine, expertise et niveau
                 </p>
-                <Button size="sm" onClick={handleAddTemplate}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un template
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={handleAddDomain}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Domaine
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleAddExpertise}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Expertise
+                  </Button>
+                  <Button size="sm" onClick={handleAddTemplate}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Template
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -363,10 +373,27 @@ export default function CriteriaManagementPage() {
                     <Card key={domain.id} className="overflow-hidden">
                       {/* Domain Header */}
                       <div className="bg-muted/50 px-4 py-3 border-b">
-                        <h3 className="font-semibold text-lg">{domain.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {domainExpertises.length} expertises • {domainTemplates.length} critères au total
-                        </p>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-semibold text-lg">{domain.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {domainExpertises.length} expertises • {domainTemplates.length} critères au total
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => handleEditDomain(domain)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteDomain(domain)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Expertises */}
@@ -387,11 +414,26 @@ export default function CriteriaManagementPage() {
                           return (
                             <div key={expertise.id} className="p-4">
                               {/* Expertise Header */}
-                              <div className="flex items-center gap-2 mb-3">
-                                <span className="text-base font-semibold">{expertise.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  ({expertiseTemplates.length} critères)
-                                </span>
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base font-semibold">{expertise.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({expertiseTemplates.length} critères)
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" onClick={() => handleEditExpertise(expertise)}>
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteExpertise(expertise)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               </div>
 
                               {/* Levels */}
