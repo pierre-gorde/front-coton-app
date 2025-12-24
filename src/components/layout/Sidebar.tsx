@@ -19,9 +19,10 @@ import { Button } from '@/components/ui/button';
 
 interface NavItem {
   label: string;
-  href: string;
+  href?: string;
   icon: React.ElementType;
   roles: RoleEnum[];
+  children?: NavItem[];
 }
 
 interface NavGroup {
@@ -39,15 +40,16 @@ const navGroups: NavGroup[] = [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: [RoleEnum.ADMIN] },
       { label: 'Clients', href: '/dashboard/admin/clients', icon: Building2, roles: [RoleEnum.ADMIN] },
       { label: 'Freelances', href: '/dashboard/admin/freelances', icon: Users, roles: [RoleEnum.ADMIN] },
-    ],
-  },
-  {
-    role: RoleEnum.ADMIN,
-    label: 'COTON Check',
-    items: [
-      { label: 'Missions', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
-      { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: [RoleEnum.ADMIN] },
-      { label: 'Critères', href: '/dashboard/admin/check/criteria', icon: ListChecks, roles: [RoleEnum.ADMIN] },
+      {
+        label: 'COTON Check',
+        icon: ClipboardCheck,
+        roles: [RoleEnum.ADMIN],
+        children: [
+          { label: 'Missions', href: '/dashboard/admin/check', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
+          { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: [RoleEnum.ADMIN] },
+          { label: 'Critères', href: '/dashboard/admin/check/criteria', icon: ListChecks, roles: [RoleEnum.ADMIN] },
+        ],
+      },
     ],
   },
   {
@@ -127,14 +129,62 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {/* Group Items */}
             <div className="space-y-1 mb-4">
               {group.items.map(item => {
-                const isActive = location.pathname === item.href ||
-                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                 const Icon = item.icon;
+
+                // If item has children, render as nested submenu
+                if (item.children) {
+                  return (
+                    <div key={item.label} className="space-y-1">
+                      {/* Parent item (non-clickable label) */}
+                      <div
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
+                          'text-sidebar-muted/80'
+                        )}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        {!collapsed && <span>{item.label}</span>}
+                      </div>
+
+                      {/* Children items (indented) */}
+                      {!collapsed && (
+                        <div className="ml-8 space-y-1">
+                          {item.children.map(child => {
+                            const isActive = location.pathname === child.href ||
+                              (child.href !== '/dashboard' && child.href && location.pathname.startsWith(child.href));
+                            const ChildIcon = child.icon;
+
+                            return (
+                              <Link
+                                key={child.href}
+                                to={child.href!}
+                                className={cn(
+                                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                                  isActive
+                                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                    : 'text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                                )}
+                              >
+                                <ChildIcon className="h-4 w-4 shrink-0" />
+                                <span>{child.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Regular item without children
+                const isActive = location.pathname === item.href ||
+                  (item.href !== '/dashboard' && item.href && location.pathname.startsWith(item.href));
 
                 return (
                   <Link
                     key={item.href}
-                    to={item.href}
+                    to={item.href!}
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                       isActive
