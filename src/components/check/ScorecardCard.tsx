@@ -39,17 +39,19 @@ function DomainSection({ domain }: { domain: DomainRatio }) {
         <span className="text-sm text-muted-foreground">{domain.percentage}%</span>
       </div>
       <Progress value={domain.percentage} className="h-2" />
-      <div className="ml-4 space-y-2">
-        {domain.expertiseRatios.map((expertise) => (
-          <div key={expertise.name} className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">{expertise.name}</span>
-              <LevelBadge level={expertise.level} />
+      {domain.expertiseRatios && domain.expertiseRatios.length > 0 && (
+        <div className="ml-4 space-y-2">
+          {domain.expertiseRatios.map((expertise) => (
+            <div key={expertise.name} className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">{expertise.name}</span>
+                <LevelBadge level={expertise.level} />
+              </div>
+              <span className="text-muted-foreground">{expertise.percentage}%</span>
             </div>
-            <span className="text-muted-foreground">{expertise.percentage}%</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,11 +3,8 @@
  * Admin page to manage Domains, Expertises, and Criterion Templates
  */
 
-import { useState, useEffect } from 'react';
-import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import * as scorecardApi from '@/lib/api/scorecardTemplates';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,13 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import type { Domain, Expertise, CriterionTemplate } from '@/lib/types';
-import * as scorecardApi from '@/lib/api/scorecardTemplates';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { CriterionTemplate, Domain, Expertise } from '@/lib/types';
+import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState } from 'react';
+
+import { AppBreadcrumb } from '@/components/common/AppBreadcrumb';
+import { Button } from '@/components/ui/button';
+import { CriterionTemplateDialog } from '@/components/check/CriterionTemplateDialog';
 import { DomainDialog } from '@/components/check/DomainDialog';
 import { ExpertiseDialog } from '@/components/check/ExpertiseDialog';
-import { CriterionTemplateDialog } from '@/components/check/CriterionTemplateDialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CriteriaManagementPage() {
   const { toast } = useToast();
@@ -353,7 +355,7 @@ export default function CriteriaManagementPage() {
                   </Button>
                   <Button size="sm" onClick={handleAddTemplate}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Template
+                    Critère
                   </Button>
                 </div>
               </div>
