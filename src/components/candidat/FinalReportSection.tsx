@@ -7,7 +7,17 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileCheck, FileText, Loader2, Download, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { FileCheck, FileText, Loader2, Download, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Candidate, CandidateReport, CheckMission, Client, ScorecardCriterion } from '@/lib/types';
 import { generateFinalReport, validateFinalReport } from '@/lib/services/checkAdminService';
@@ -42,8 +52,20 @@ export function FinalReportSection({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const handleGenerateClick = () => {
+    // If final report already exists, show confirmation dialog
+    if (finalReport) {
+      setShowConfirmDialog(true);
+    } else {
+      // If no report exists, generate directly
+      handleGenerate();
+    }
+  };
 
   const handleGenerate = async () => {
+    setShowConfirmDialog(false);
     if (reviewerReports.length === 0) {
       toast({
         title: 'Impossible de générer',
@@ -237,9 +259,9 @@ export function FinalReportSection({
         )}
 
         <Button
-          onClick={handleGenerate}
+          onClick={handleGenerateClick}
           disabled={isGenerating}
-          variant="outline"
+          variant="destructive"
         >
           {isGenerating ? (
             <>
@@ -248,7 +270,7 @@ export function FinalReportSection({
             </>
           ) : (
             <>
-              <FileCheck className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 mr-2" />
               Régénérer depuis les reviewers
             </>
           )}
@@ -263,6 +285,29 @@ export function FinalReportSection({
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Régénérer le rapport final ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action va écraser le rapport final existant et le remplacer par une nouvelle fusion des évaluations des reviewers.
+              <br /><br />
+              <strong>Attention :</strong> Toutes les modifications manuelles du rapport final seront perdues.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleGenerate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Régénérer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

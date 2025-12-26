@@ -4,6 +4,9 @@
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, Loader2, Percent, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import type { CheckMission, CriterionGroup, DomainRatio, ExpertiseRatio, ScorecardCriterion, SkillLevel } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -12,14 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Loader2, Percent, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import type { CheckMission, CriterionGroup, DomainRatio, ExpertiseRatio, ScorecardCriterion, SkillLevel } from '@/lib/types';
-
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -27,7 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useEffect, useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 interface ScorecardEditDialogProps {
