@@ -310,9 +310,8 @@ export function ScorecardEditDialog({
 
       if (criteria.length === 0) {
         toast({
-          title: 'Attention',
-          description: 'Aucun template trouvé en BDD pour ces domaines. Vous devrez créer les critères manuellement.',
-          variant: 'destructive',
+          title: 'Information',
+          description: 'Aucun template trouvé en BDD pour ces domaines. Vous pouvez ajouter des critères manuellement ci-dessous.',
         });
       } else {
         toast({
@@ -678,7 +677,7 @@ export function ScorecardEditDialog({
           </div>
 
           {/* Criteria Editor */}
-          {showPreview && generatedCriteria.length > 0 && (
+          {showPreview && (
             <div className="space-y-4 border-t pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">Critères d'évaluation</h3>
@@ -702,6 +701,15 @@ export function ScorecardEditDialog({
                   {generatedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0)}%
                 </Badge>
               </div>
+
+              {/* Empty state message */}
+              {generatedCriteria.length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    Aucun critère pour le moment. Cliquez sur "Ajouter" dans les sections ci-dessous pour créer vos critères manuellement.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Primary Criteria */}
