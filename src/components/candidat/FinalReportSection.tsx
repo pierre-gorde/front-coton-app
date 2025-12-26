@@ -4,8 +4,6 @@
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -17,13 +15,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileCheck, FileText, Loader2, Download, AlertTriangle, RefreshCw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { AlertTriangle, Download, FileCheck, FileText, Loader2, RefreshCw } from 'lucide-react';
 import type { Candidate, CandidateReport, CheckMission, Client, ScorecardCriterion } from '@/lib/types';
 import { generateFinalReport, validateFinalReport } from '@/lib/services/checkAdminService';
-import { exportFinalReportToPDF } from '@/lib/utils/pdfExport';
+
+import { Button } from '@/components/ui/button';
 import { FinalEvaluationCard } from './FinalEvaluationCard';
 import { FinalReportForm } from './FinalReportForm';
+import { exportFinalReportToPDF } from '@/lib/utils/pdfExport';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface FinalReportSectionProps {
   candidateId: string;
@@ -31,6 +32,7 @@ interface FinalReportSectionProps {
   finalReport?: CandidateReport;
   reviewerReports: CandidateReport[];
   candidate: Candidate;
+  candidateName: string;
   mission: CheckMission;
   client: Client;
   scorecardCriteria: ScorecardCriterion[];
@@ -43,6 +45,7 @@ export function FinalReportSection({
   finalReport,
   reviewerReports,
   candidate,
+  candidateName,
   mission,
   client,
   scorecardCriteria,
@@ -128,13 +131,13 @@ export function FinalReportSection({
     if (!finalReport) return;
 
     try {
-      exportFinalReportToPDF(
-        finalReport,
-        candidate,
-        mission,
-        client,
-        scorecardCriteria
-      );
+      exportFinalReportToPDF({
+        report: finalReport,
+        candidateName,
+        missionTitle: mission.title,
+        clientName: client.name,
+        scorecardCriteria,
+      });
 
       toast({
         title: 'Succès',

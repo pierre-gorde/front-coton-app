@@ -400,6 +400,7 @@ export default function CandidatDetailPage() {
             finalReport={finalReport}
             reviewerReports={reviewerReports}
             candidate={candidate}
+            candidateName={`${candidateUser?.firstName} ${candidateUser?.lastName}`}
             mission={mission}
             client={client}
             scorecardCriteria={scorecardCriteria}
