@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, RefreshCw, Loader2, Clock, Pencil, FileDown, Code2 } from 'lucide-react';
+import { Award, RefreshCw, Loader2, Clock, Pencil, Code2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import type { CandidateReport, ScorecardCriterion, CriterionGroup } from '@/lib/types';
-import { exportFinalReportToPDF } from '@/lib/utils/pdfExport';
 
 interface FinalEvaluationCardProps {
   report: CandidateReport | undefined;
@@ -35,9 +34,6 @@ interface FinalEvaluationCardProps {
   hasReviewerReports: boolean;
   onGenerateFinal?: () => Promise<void>;
   onEdit?: () => void;
-  candidateName?: string;
-  missionTitle?: string;
-  clientName?: string;
 }
 
 function getScoreColor(score: number): string {
@@ -122,9 +118,6 @@ export function FinalEvaluationCard({
   hasReviewerReports,
   onGenerateFinal,
   onEdit,
-  candidateName = 'Candidat',
-  missionTitle = 'Mission',
-  clientName = 'Client'
 }: FinalEvaluationCardProps) {
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
@@ -161,31 +154,6 @@ export function FinalEvaluationCard({
     }
   };
 
-  const handleExportPDF = () => {
-    if (!report) return;
-
-    try {
-      exportFinalReportToPDF({
-        report,
-        candidateName,
-        missionTitle,
-        clientName,
-        scorecardCriteria,
-      });
-
-      toast({
-        title: 'Export réussi',
-        description: 'Le rapport a été exporté en PDF.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur d\'export',
-        description: error instanceof Error ? error.message : 'Impossible d\'exporter le rapport.',
-      });
-    }
-  };
-
   return (
     <Card className="rounded-xl shadow-sm">
       <CardHeader className="p-6 pb-4">
@@ -195,12 +163,6 @@ export function FinalEvaluationCard({
             Évaluation finale
           </CardTitle>
           <div className="flex items-center gap-2">
-            {report && (
-              <Button onClick={handleExportPDF} variant="outline" size="sm">
-                <FileDown className="h-4 w-4 mr-2" />
-                Exporter PDF
-              </Button>
-            )}
             {report && onEdit && (
               <Button onClick={onEdit} variant="ghost" size="icon">
                 <Pencil className="h-4 w-4" />
