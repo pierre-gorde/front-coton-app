@@ -8,6 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -118,8 +128,20 @@ export function FinalEvaluationCard({
 }: FinalEvaluationCardProps) {
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const handleGenerateClick = () => {
+    // If report exists, show confirmation dialog
+    if (report) {
+      setShowConfirmDialog(true);
+    } else {
+      // If no report exists, generate directly
+      handleGenerate();
+    }
+  };
 
   const handleGenerate = async () => {
+    setShowConfirmDialog(false);
     if (!onGenerateFinal) return;
     setGenerating(true);
     try {
@@ -185,13 +207,17 @@ export function FinalEvaluationCard({
               </Button>
             )}
             {hasReviewerReports && onGenerateFinal && (
-              <Button onClick={handleGenerate} disabled={generating} variant="outline">
+              <Button
+                onClick={handleGenerateClick}
+                disabled={generating}
+                variant={report ? "destructive" : "outline"}
+              >
                 {generating ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                {report ? 'Mettre à jour' : 'Générer'} le rapport final
+                {report ? 'Régénérer' : 'Générer'} le rapport final
               </Button>
             )}
           </div>
@@ -297,6 +323,29 @@ export function FinalEvaluationCard({
           </div>
         )}
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Régénérer le rapport final ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action va écraser le rapport final existant et le remplacer par une nouvelle fusion des évaluations des reviewers.
+              <br /><br />
+              <strong>Attention :</strong> Toutes les modifications manuelles du rapport final seront perdues.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleGenerate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Régénérer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
