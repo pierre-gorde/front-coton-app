@@ -214,6 +214,7 @@ export function FinalReportSection({
       <FinalReportForm
         report={finalReport}
         scorecardCriteria={scorecardCriteria}
+        reviewerReports={reviewerReports}
         onReportUpdated={handleSave}
         onCancel={handleCancel}
       />
@@ -253,8 +254,7 @@ export function FinalReportSection({
         ) : (
           <Button
             onClick={handleExportPDF}
-            variant="default"
-            className="gradient-accent text-accent-foreground"
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             <Download className="h-4 w-4 mr-2" />
             Télécharger PDF

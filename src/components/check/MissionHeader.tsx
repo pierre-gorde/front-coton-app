@@ -4,26 +4,6 @@
  * Following CLAUDE.md patterns: proper state management, error handling with toasts
  */
 
-import { Building2, Calendar, Check, Loader2, Pencil, Trash2, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CheckMission, CheckMissionStatus, Client } from '@/lib/types';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ClientSelectCreate } from './ClientSelectCreate';
-import { Input } from '@/components/ui/input';
-import { Link, useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +14,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Building2, Calendar, Check, Loader2, Pencil, Trash2, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { CheckMission, CheckMissionStatus, Client } from '@/lib/types';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ClientSelectCreate } from './ClientSelectCreate';
+import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
   DRAFT: { label: 'Brouillon', variant: 'secondary' },
@@ -180,7 +180,7 @@ export function MissionHeader({ mission, client, onUpdate }: MissionHeaderProps)
       });
 
       // Redirect to mission list
-      navigate('/dashboard/admin/check/missions');
+      navigate('/dashboard/admin/check/mission');
     } catch (error) {
       console.error('Failed to delete mission:', error);
       toast({

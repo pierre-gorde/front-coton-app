@@ -1,28 +1,28 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { AppShell } from "@/components/layout/AppShell";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+import { AppShell } from "@/components/layout/AppShell";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthVerify } from "@/pages/AuthVerify";
+import CandidatDetailPage from "@/pages/admin/CandidatDetail";
+import CandidatsPage from "@/pages/admin/CandidatsPage";
+import CheckDetailPage from "@/pages/admin/check/CheckDetail";
+import CheckListPage from "@/pages/admin/check/CheckList";
+import ClientDetailPage from "@/pages/admin/ClientDetail";
+import ClientsPage from "@/pages/admin/ClientsPage";
+import CriteriaManagementPage from "@/pages/admin/check/CriteriaManagement";
+import DashboardPage from "@/pages/Dashboard";
+import FreelanceDetailPage from "@/pages/admin/FreelanceDetail";
+import FreelancesPage from "@/pages/admin/FreelancesPage";
 // Pages
 import LoginPage from "@/pages/Login";
-import { AuthVerify } from "@/pages/AuthVerify";
-import DashboardPage from "@/pages/Dashboard";
-import CheckListPage from "@/pages/admin/check/CheckList";
-import CheckDetailPage from "@/pages/admin/check/CheckDetail";
-import CriteriaManagementPage from "@/pages/admin/check/CriteriaManagement";
-import ClientDetailPage from "@/pages/admin/ClientDetail";
-import FreelanceDetailPage from "@/pages/admin/FreelanceDetail";
-import CandidatDetailPage from "@/pages/admin/CandidatDetail";
-import ClientsPage from "@/pages/admin/ClientsPage";
-import FreelancesPage from "@/pages/admin/FreelancesPage";
-import CandidatsPage from "@/pages/admin/CandidatsPage";
-import SettingsPage from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import SettingsPage from "@/pages/Settings";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const queryClient = new QueryClient();
 
@@ -50,16 +50,20 @@ const App = () => (
               >
                 <Route index element={<DashboardPage />} />
 
-                {/* Admin routes */}
-                <Route path="admin/check/missions" element={<CheckListPage />} />
-                <Route path="admin/check/missions/:checkId" element={<CheckDetailPage />} />
+                {/* Check routes */}
+                <Route path="admin/check/mission" element={<CheckListPage />} />
+                <Route path="admin/check/mission/:checkId" element={<CheckDetailPage />} />
                 <Route path="admin/check/criteria" element={<CriteriaManagementPage />} />
+                <Route path="admin/check/candidate/:candidateId" element={<CandidatDetailPage />} />
+                <Route path="admin/check/candidate" element={<CandidatsPage />} />
+
+                {/* Client routes */}
+                <Route path="admin/client" element={<ClientsPage />} />
                 <Route path="admin/client/:clientId" element={<ClientDetailPage />} />
+
+                {/* Freelance routes */}
                 <Route path="admin/freelance/:userId" element={<FreelanceDetailPage />} />
-                <Route path="admin/candidat/:candidatId" element={<CandidatDetailPage />} />
-                <Route path="admin/clients" element={<ClientsPage />} />
-                <Route path="admin/freelances" element={<FreelancesPage />} />
-                <Route path="admin/candidats" element={<CandidatsPage />} />
+                <Route path="admin/freelance" element={<FreelancesPage />} />
 
                 {/* Settings */}
                 <Route path="settings" element={<SettingsPage />} />

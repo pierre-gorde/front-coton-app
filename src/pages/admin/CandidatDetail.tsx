@@ -5,7 +5,7 @@
  */
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Briefcase, Building2, ExternalLink, FileText, GitPullRequest, Loader2, User as UserIcon, UserMinus, UserPlus, Users } from 'lucide-react';
+import { AlertTriangle, Briefcase, Building2, Edit, ExternalLink, FileText, GitPullRequest, Loader2, User as UserIcon, UserMinus, UserPlus, Users } from 'lucide-react';
 import { type CandidateEvaluationView } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useParams } from 'react-router-dom';
@@ -21,12 +21,13 @@ import { ReviewerSideMenu } from '@/components/candidat/ReviewerSideMenu';
 import { ReviewerReportSection } from '@/components/candidat/ReviewerReportSection';
 import { FinalReportSection } from '@/components/candidat/FinalReportSection';
 import { CandidateReviewerAssignmentDialog } from '@/components/candidat/CandidateReviewerAssignmentDialog';
+import { CandidateEditDialog } from '@/components/candidat/CandidateEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { RoleEnum, type User } from '@/lib/types';
 
 export default function CandidatDetailPage() {
-  const { candidatId } = useParams<{ candidatId: string }>();
+  const { candidateId } = useParams<{ candidateId: string }>();
   const { user, roles } = useAuth();
   const { toast } = useToast();
   const [data, setData] = useState<CandidateEvaluationView | null>(null);
@@ -36,17 +37,18 @@ export default function CandidatDetailPage() {
   const [invitingGithub, setInvitingGithub] = useState(false);
   const [excludingGithub, setExcludingGithub] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [allFreelances, setAllFreelances] = useState<User[]>([]);
 
   const isAdmin = roles.includes(RoleEnum.ADMIN);
   const isReviewer = roles.includes(RoleEnum.FREELANCE);
 
   const loadData = useCallback(async () => {
-    if (!candidatId) return;
+    if (!candidateId) return;
     setLoading(true);
 
     try {
-      const result = await getCandidateEvaluationView(candidatId);
+      const result = await getCandidateEvaluationView(candidateId);
       setData(result ?? null);
 
       // Auto-select first reviewer or current user if reviewer
@@ -69,7 +71,7 @@ export default function CandidatDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [candidatId, isAdmin, isReviewer, user?.id, toast]);
+  }, [candidateId, isAdmin, isReviewer, user?.id, toast]);
 
   useEffect(() => {
     loadData();
@@ -96,11 +98,11 @@ export default function CandidatDetailPage() {
   }, [isAdmin]);
 
   const handleInviteToGithub = async () => {
-    if (!candidatId) return;
+    if (!candidateId) return;
 
     try {
       setInvitingGithub(true);
-      await inviteCandidateToRepo(candidatId);
+      await inviteCandidateToRepo(candidateId);
 
       toast({
         title: 'Succès',
@@ -120,11 +122,11 @@ export default function CandidatDetailPage() {
   };
 
   const handleExcludeFromGithub = async () => {
-    if (!candidatId) return;
+    if (!candidateId) return;
 
     try {
       setExcludingGithub(true);
-      await excludeCandidateFromRepo(candidatId);
+      await excludeCandidateFromRepo(candidateId);
 
       toast({
         title: 'Succès',
@@ -168,8 +170,8 @@ export default function CandidatDetailPage() {
 
   const breadcrumbItems = [
     { label: 'Admin', href: '/dashboard' },
-    { label: 'COTON Check', href: '/dashboard/admin/check/missions' },
-    { label: mission.title, href: `/dashboard/admin/check/missions/${mission.id}` },
+    { label: 'COTON Check', href: '/dashboard/admin/check/mission' },
+    { label: mission.title, href: `/dashboard/admin/check/mission/${mission.id}` },
     { label: `${candidateUser?.firstName} ${candidateUser?.lastName}`, isCurrent: true },
   ];
 
@@ -199,10 +201,22 @@ export default function CandidatDetailPage() {
       {/* Candidate Header Card */}
       <Card className="rounded-xl shadow-sm">
         <CardHeader className="p-6 pb-4">
-          <CardTitle className="flex items-center gap-2">
-            <UserIcon className="h-5 w-5" />
-            {candidateUser?.firstName} {candidateUser?.lastName}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <UserIcon className="h-5 w-5" />
+              {candidateUser?.firstName} {candidateUser?.lastName}
+            </CardTitle>
+            {isAdmin && (
+              <Button
+                onClick={() => setEditDialogOpen(true)}
+                variant="outline"
+                size="sm"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Modifier les infos
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,10 +227,20 @@ export default function CandidatDetailPage() {
               )}
 
               <div className="flex items-center gap-2 text-sm">
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">GitHub:</span>
+                {candidateUser?.githubUsername ? (
+                  <span className="font-medium">@{candidateUser.githubUsername}</span>
+                ) : (
+                  <span className="text-muted-foreground italic">Non renseigné</span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Mission:</span>
                 <Link
-                  to={`/dashboard/admin/check/missions/${mission.id}`}
+                  to={`/dashboard/admin/check/mission/${mission.id}`}
                   className="text-primary hover:underline font-medium"
                 >
                   {mission.title}
@@ -234,20 +258,23 @@ export default function CandidatDetailPage() {
                 </Link>
               </div>
 
-              {candidate.githubRepoUrl && (
-                <div className="flex items-center gap-2 text-sm">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">GitHub:</span>
+              <div className="flex items-center gap-2 text-sm">
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Repository:</span>
+                {candidate.githubRepoUrl ? (
                   <a
                     href={candidate.githubRepoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline font-medium"
+                    className="text-primary hover:underline font-medium flex items-center gap-1"
                   >
                     {candidate.githubRepoUrl.replace('https://github.com/', '')}
+                    <ExternalLink className="h-3 w-3" />
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span className="text-muted-foreground italic">Non renseigné</span>
+                )}
+              </div>
             </div>
 
             {/* Right Column */}
@@ -418,6 +445,17 @@ export default function CandidatDetailPage() {
           currentAssignedReviewers={assignedReviewers}
           allFreelances={allFreelances}
           onSuccess={handleAssignmentSuccess}
+        />
+      )}
+
+      {/* Candidate Edit Dialog */}
+      {isAdmin && (
+        <CandidateEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          candidate={candidate}
+          candidateUser={candidateUser}
+          onSuccess={loadData}
         />
       )}
     </div>

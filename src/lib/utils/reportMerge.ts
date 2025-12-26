@@ -116,7 +116,7 @@ function deduplicateBullets(bullets: string[]): string[] {
 }
 
 /**
- * Merge bullet point sections (positives/negatives) from multiple texts
+ * Merge bullet point sections (positivePoints/negativePoints) from multiple texts
  * - Parse all into bullet lists
  * - Deduplicate
  * - Limit to max 8 bullets (keep longest/most informative)

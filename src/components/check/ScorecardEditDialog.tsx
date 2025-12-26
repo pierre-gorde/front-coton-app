@@ -224,6 +224,15 @@ export function ScorecardEditDialog({
   const updateDomain = (index: number, field: keyof DomainRatioInput, value: any) => {
     const updated = [...domainRatios];
     updated[index] = { ...updated[index], [field]: value };
+
+    // If changing the domain level, update all child expertise levels to match
+    if (field === 'level' && updated[index].expertiseRatios) {
+      updated[index].expertiseRatios = updated[index].expertiseRatios.map(expertise => ({
+        ...expertise,
+        level: value as SkillLevel,
+      }));
+    }
+
     setDomainRatios(updated);
   };
 
@@ -286,13 +295,11 @@ export function ScorecardEditDialog({
   };
 
   const generateCriteria = async () => {
+    // Auto-normalize domain percentages to 100% before generating
     if (!isValidTotal) {
-      toast({
-        title: 'Erreur',
-        description: 'Le total des pourcentages doit être égal à 100%',
-        variant: 'destructive',
-      });
-      return;
+      normalizeDomainPercentages();
+      // Wait a tick for state to update
+      await new Promise(resolve => setTimeout(resolve, 0));
     }
 
     try {
@@ -485,16 +492,17 @@ export function ScorecardEditDialog({
             <div className="flex items-center justify-between">
               <h3 className="font-medium">Domaines d'évaluation</h3>
               <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={normalizeDomainPercentages}
-                  disabled={totalPercentage === 100}
-                >
-                  <Percent className="h-4 w-4 mr-2" />
-                  Normaliser à 100%
-                </Button>
+                {totalPercentage !== 100 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={normalizeDomainPercentages}
+                  >
+                    <Percent className="h-4 w-4 mr-2" />
+                    Normaliser à 100%
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -539,6 +547,7 @@ export function ScorecardEditDialog({
                         max="100"
                         value={domain.percentage}
                         onChange={(e) => updateDomain(domainIndex, 'percentage', parseInt(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
                       />
                     </div>
 
@@ -618,6 +627,7 @@ export function ScorecardEditDialog({
                           onChange={(e) =>
                             updateExpertise(domainIndex, expertiseIndex, 'percentage', parseInt(e.target.value) || 0)
                           }
+                          onFocus={(e) => e.target.select()}
                           className="w-20"
                         />
                         <Select
@@ -659,7 +669,7 @@ export function ScorecardEditDialog({
             <Button
               type="button"
               onClick={generateCriteria}
-              disabled={!isValidTotal || isGenerating}
+              disabled={isGenerating}
               className="gradient-accent text-accent-foreground"
             >
               {isGenerating ? (
@@ -682,15 +692,17 @@ export function ScorecardEditDialog({
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">Critères d'évaluation</h3>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={normalizeCriteriaPercentages}
-                  >
-                    <Percent className="h-4 w-4 mr-2" />
-                    Normaliser à 100%
-                  </Button>
+                  {generatedCriteria.reduce((sum, c) => sum + c.weightPercentage, 0) !== 100 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={normalizeCriteriaPercentages}
+                    >
+                      <Percent className="h-4 w-4 mr-2" />
+                      Normaliser à 100%
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -742,6 +754,7 @@ export function ScorecardEditDialog({
                           max="100"
                           value={criterion.weightPercentage}
                           onChange={(e) => updateCriterion(criterion.id, 'weightPercentage', parseInt(e.target.value) || 0)}
+                          onFocus={(e) => e.target.select()}
                           className="w-20"
                         />
                         <span className="text-xs text-muted-foreground">%</span>
@@ -787,6 +800,7 @@ export function ScorecardEditDialog({
                           max="100"
                           value={criterion.weightPercentage}
                           onChange={(e) => updateCriterion(criterion.id, 'weightPercentage', parseInt(e.target.value) || 0)}
+                          onFocus={(e) => e.target.select()}
                           className="w-20"
                         />
                         <span className="text-xs text-muted-foreground">%</span>

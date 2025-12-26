@@ -86,7 +86,7 @@ export default function CheckDetailPage() {
 
   const breadcrumbItems = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'COTON Check', href: '/dashboard/admin/check/missions' },
+    { label: 'COTON Check', href: '/dashboard/admin/check/mission' },
     { label: detail?.mission.title ?? `Poste ${checkId}`, isCurrent: true },
   ];
 
@@ -252,7 +252,7 @@ export default function CheckDetailPage() {
                   <TableRow
                     key={candidate.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/dashboard/admin/candidat/${candidate.id}`)}
+                    onClick={() => navigate(`/dashboard/admin/check/candidate/${candidate.id}`)}
                   >
                     <TableCell className="font-medium">{candidate.user?.firstName} {candidate.user?.lastName ?? '—'}</TableCell>
                     <TableCell>{candidate.user?.email ?? '—'}</TableCell>

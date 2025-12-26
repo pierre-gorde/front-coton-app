@@ -1,6 +1,7 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import type { CandidateReport, ScorecardCriterion } from '@/lib/types';
+
+import autoTable from 'jspdf-autotable';
+import jsPDF from 'jspdf';
 
 interface PDFExportOptions {
   report: CandidateReport;
@@ -8,6 +9,13 @@ interface PDFExportOptions {
   missionTitle: string;
   clientName: string;
   scorecardCriteria: ScorecardCriterion[];
+}
+
+// Extend jsPDF to include autoTable's lastAutoTable property
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
 }
 
 export function exportFinalReportToPDF({
@@ -48,50 +56,57 @@ export function exportFinalReportToPDF({
   yPosition += 15;
 
   // Summary section
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Avis Global', 20, yPosition);
-  yPosition += 7;
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  const summaryLines = doc.splitTextToSize(report.summary, 170);
-  doc.text(summaryLines, 20, yPosition);
-  yPosition += summaryLines.length * 5 + 10;
-
-  // Positives & Negatives
-  if (yPosition > 250) {
-    doc.addPage();
-    yPosition = 20;
+  if (report.summary && report.summary.trim()) {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Avis Global', 20, yPosition);
+    yPosition += 7;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const summaryLines = doc.splitTextToSize(report.summary, 170);
+    doc.text(summaryLines, 20, yPosition);
+    yPosition += summaryLines.length * 5 + 10;
   }
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(34, 197, 94); // green
-  doc.text('Points Positifs', 20, yPosition);
-  yPosition += 7;
-  doc.setTextColor(0, 0, 0);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  const positivesLines = doc.splitTextToSize(report.positives, 170);
-  doc.text(positivesLines, 20, yPosition);
-  yPosition += positivesLines.length * 5 + 10;
+  // Positives
+  if (report.positivePoints && report.positivePoints.trim()) {
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = 20;
+    }
 
-  if (yPosition > 250) {
-    doc.addPage();
-    yPosition = 20;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(34, 197, 94); // green
+    doc.text('Points Positifs', 20, yPosition);
+    yPosition += 7;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const positivesLines = doc.splitTextToSize(report.positivePoints, 170);
+    doc.text(positivesLines, 20, yPosition);
+    yPosition += positivesLines.length * 5 + 10;
   }
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(239, 68, 68); // red
-  doc.text('Points Négatifs', 20, yPosition);
-  yPosition += 7;
-  doc.setTextColor(0, 0, 0);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  const negativesLines = doc.splitTextToSize(report.negatives, 170);
-  doc.text(negativesLines, 20, yPosition);
-  yPosition += negativesLines.length * 5 + 10;
+  // Negatives
+  if (report.negativePoints && report.negativePoints.trim()) {
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(239, 68, 68); // red
+    doc.text('Points Négatifs', 20, yPosition);
+    yPosition += 7;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const negativesLines = doc.splitTextToSize(report.negativePoints, 170);
+    doc.text(negativesLines, 20, yPosition);
+    yPosition += negativesLines.length * 5 + 10;
+  }
 
   // Remarks
   if (report.remarks && report.remarks.trim()) {
@@ -155,7 +170,7 @@ export function exportFinalReportToPDF({
         styles: { fontSize: 9 },
       });
 
-      yPosition = (doc as any).lastAutoTable.finalY + 10;
+      yPosition = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 10;
     }
 
     // Secondary criteria

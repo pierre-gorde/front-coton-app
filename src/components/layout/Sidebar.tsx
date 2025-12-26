@@ -1,21 +1,22 @@
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
-import { RoleEnum } from '@/lib/types';
 import {
-  LayoutDashboard,
-  ClipboardCheck,
-  Users,
+  Briefcase,
   Building2,
-  UserCircle,
-  Settings,
   ChevronLeft,
   ChevronRight,
-  Briefcase,
+  ClipboardCheck,
   FileText,
+  LayoutDashboard,
   ListChecks,
+  Settings,
+  UserCircle,
+  Users,
 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
+import { RoleEnum } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavItem {
   label: string;
@@ -38,15 +39,15 @@ const navGroups: NavGroup[] = [
     label: 'Administration',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: [RoleEnum.ADMIN] },
-      { label: 'Clients', href: '/dashboard/admin/clients', icon: Building2, roles: [RoleEnum.ADMIN] },
-      { label: 'Freelances', href: '/dashboard/admin/freelances', icon: Users, roles: [RoleEnum.ADMIN] },
+      { label: 'Clients', href: '/dashboard/admin/client', icon: Building2, roles: [RoleEnum.ADMIN] },
+      { label: 'Freelances', href: '/dashboard/admin/freelance', icon: Users, roles: [RoleEnum.ADMIN] },
       {
         label: 'COTON Check',
         icon: ClipboardCheck,
         roles: [RoleEnum.ADMIN],
         children: [
-          { label: 'Missions', href: '/dashboard/admin/check/missions', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
-          { label: 'Candidats', href: '/dashboard/admin/candidats', icon: UserCircle, roles: [RoleEnum.ADMIN] },
+          { label: 'Missions', href: '/dashboard/admin/check/mission', icon: ClipboardCheck, roles: [RoleEnum.ADMIN] },
+          { label: 'Candidats', href: '/dashboard/admin/check/candidate', icon: UserCircle, roles: [RoleEnum.ADMIN] },
           { label: 'Critères', href: '/dashboard/admin/check/criteria', icon: ListChecks, roles: [RoleEnum.ADMIN] },
         ],
       },
@@ -56,23 +57,23 @@ const navGroups: NavGroup[] = [
     role: RoleEnum.FREELANCE,
     label: 'Freelance',
     items: [
-      { label: 'Mes missions', href: '/dashboard/freelance/missions', icon: Briefcase, roles: [RoleEnum.FREELANCE] },
-      { label: 'Mes évaluations', href: '/dashboard/freelance/evaluations', icon: FileText, roles: [RoleEnum.FREELANCE] },
+      { label: 'Mes missions', href: '/dashboard/freelance/mission', icon: Briefcase, roles: [RoleEnum.FREELANCE] },
+      { label: 'Mes évaluations', href: '/dashboard/freelance/evaluation', icon: FileText, roles: [RoleEnum.FREELANCE] },
     ],
   },
   {
     role: RoleEnum.CLIENT,
     label: 'Client',
     items: [
-      { label: 'Mes missions', href: '/dashboard/client/missions', icon: Briefcase, roles: [RoleEnum.CLIENT] },
-      { label: 'Candidats', href: '/dashboard/client/candidats', icon: UserCircle, roles: [RoleEnum.CLIENT] },
+      { label: 'Mes missions', href: '/dashboard/client/mission', icon: Briefcase, roles: [RoleEnum.CLIENT] },
+      { label: 'Candidats', href: '/dashboard/client/candidate', icon: UserCircle, roles: [RoleEnum.CLIENT] },
     ],
   },
   {
     role: RoleEnum.CANDIDAT,
     label: 'Candidat',
     items: [
-      { label: 'Mon évaluation', href: '/dashboard/candidat/evaluation', icon: FileText, roles: [RoleEnum.CANDIDAT] },
+      { label: 'Mon évaluation', href: '/dashboard/candidate/evaluation', icon: FileText, roles: [RoleEnum.CANDIDAT] },
     ],
   },
 ];

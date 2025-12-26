@@ -55,7 +55,7 @@ export function MissionCreateDialog({
       onOpenChange(false);
 
       // Navigate to mission detail page
-      navigate(`/dashboard/admin/check/missions/${newMission.id}`);
+      navigate(`/dashboard/admin/check/mission/${newMission.id}`);
     } catch (error) {
       console.error('Failed to create mission:', error);
       toast({

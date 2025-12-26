@@ -1,13 +1,6 @@
-import { useState, useCallback } from 'react';
-import { Save, Loader2, Award, X } from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Award, Info, Loader2, Save, X } from 'lucide-react';
+import type { CandidateReport, CriterionGroup, CriterionScore, ScorecardCriterion } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import {
   Table,
   TableBody,
@@ -16,13 +9,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { computeFinalScore, updateFinalReport } from '@/lib/services/checkAdminService';
+import { useCallback, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { CandidateReport, ScorecardCriterion, CriterionScore, CriterionGroup } from '@/lib/types';
-import { updateFinalReport, computeFinalScore } from '@/lib/services/checkAdminService';
 
 interface FinalReportFormProps {
   report: CandidateReport;
   scorecardCriteria: ScorecardCriterion[];
+  reviewerReports?: CandidateReport[];
   onReportUpdated: (report: CandidateReport) => void;
   onCancel?: () => void;
 }
@@ -38,6 +45,7 @@ interface CriterionGroupFormProps {
   title: string;
   scorecardCriteria: ScorecardCriterion[];
   criterionScores: CriterionScore[];
+  reviewerReports?: CandidateReport[];
   onScoreChange: (criterionId: string, score: number) => void;
   onCommentChange: (criterionId: string, comment: string) => void;
 }
@@ -47,6 +55,7 @@ function CriterionGroupForm({
   title,
   scorecardCriteria,
   criterionScores,
+  reviewerReports,
   onScoreChange,
   onCommentChange,
 }: CriterionGroupFormProps) {
@@ -57,6 +66,11 @@ function CriterionGroupForm({
 
   const getScore = (criterionId: string): CriterionScore | undefined =>
     criterionScores.find(cs => cs.criterionId === criterionId);
+
+  // Helper to get reviewer score for a criterion
+  const getReviewerScore = (criterionId: string, reviewerReport: CandidateReport) => {
+    return reviewerReport.criterionScores.find(cs => cs.criterionId === criterionId);
+  };
 
   return (
     <div className="space-y-3">
@@ -84,6 +98,11 @@ function CriterionGroupForm({
           {groupCriteria.map(criterion => {
             const scoreData = getScore(criterion.id);
             const score = scoreData?.score ?? 0;
+            const primaryReport = reviewerReports?.find(r => r.role === 'REVIEWER');
+            const secondaryReport = reviewerReports?.find((r, idx) => r.role === 'REVIEWER' && idx > 0);
+            const primaryScore = primaryReport ? getReviewerScore(criterion.id, primaryReport) : null;
+            const secondaryScore = secondaryReport ? getReviewerScore(criterion.id, secondaryReport) : null;
+
             return (
               <TableRow key={criterion.id}>
                 <TableCell>
@@ -100,17 +119,43 @@ function CriterionGroupForm({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={10}
-                      step={0.5}
-                      value={score}
-                      onChange={(e) => onScoreChange(criterion.id, Math.min(10, Math.max(0, parseFloat(e.target.value) || 0)))}
-                      className={`w-16 text-center ${getScoreColor(score)}`}
-                    />
-                    <span className="text-xs text-muted-foreground">/10</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        value={score}
+                        onChange={(e) => onScoreChange(criterion.id, Math.min(10, Math.max(0, parseFloat(e.target.value) || 0)))}
+                        className={`w-16 text-center ${getScoreColor(score)}`}
+                      />
+                      <span className="text-xs text-muted-foreground">/10</span>
+                    </div>
+                    {(primaryScore || secondaryScore) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help flex-shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="space-y-1">
+                              <p className="font-semibold text-xs">Scores des reviewers:</p>
+                              {primaryScore && (
+                                <p className="text-xs">
+                                  <span className="font-medium">Reviewer 1:</span> {primaryScore.score}
+                                </p>
+                              )}
+                              {secondaryScore && (
+                                <p className="text-xs">
+                                  <span className="font-medium">Reviewer 2:</span> {secondaryScore.score}
+                                </p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -133,6 +178,7 @@ function CriterionGroupForm({
 export function FinalReportForm({
   report,
   scorecardCriteria,
+  reviewerReports,
   onReportUpdated,
   onCancel,
 }: FinalReportFormProps) {
@@ -154,8 +200,8 @@ export function FinalReportForm({
     initializeCriterionScores(report.criterionScores, scorecardCriteria)
   );
   const [summary, setSummary] = useState(report.summary);
-  const [positives, setPositives] = useState(report.positives);
-  const [negatives, setNegatives] = useState(report.negatives);
+  const [positivePoints, setPositivePoints] = useState(report.positivePoints);
+  const [negativePoints, setNegativePoints] = useState(report.negativePoints);
   const [remarks, setRemarks] = useState(report.remarks);
 
   // Calculate live final score
@@ -165,12 +211,12 @@ export function FinalReportForm({
   const isDirty = useCallback(() => {
     return (
       summary !== report.summary ||
-      positives !== report.positives ||
-      negatives !== report.negatives ||
+      positivePoints !== report.positivePoints ||
+      negativePoints !== report.negativePoints ||
       remarks !== report.remarks ||
       JSON.stringify(criterionScores) !== JSON.stringify(report.criterionScores)
     );
-  }, [summary, positives, negatives, remarks, criterionScores, report]);
+  }, [summary, positivePoints, negativePoints, remarks, criterionScores, report]);
 
   const handleScoreChange = (criterionId: string, score: number) => {
     setCriterionScores(prev =>
@@ -190,8 +236,8 @@ export function FinalReportForm({
       const updated = await updateFinalReport(report.id, {
         criterionScores,
         summary,
-        positives,
-        negatives,
+        positivePoints,
+        negativePoints,
         remarks,
       });
       onReportUpdated(updated);
@@ -258,6 +304,7 @@ export function FinalReportForm({
             title="Critères primaires"
             scorecardCriteria={scorecardCriteria}
             criterionScores={criterionScores}
+            reviewerReports={reviewerReports}
             onScoreChange={handleScoreChange}
             onCommentChange={handleCommentChange}
           />
@@ -266,6 +313,7 @@ export function FinalReportForm({
             title="Critères secondaires"
             scorecardCriteria={scorecardCriteria}
             criterionScores={criterionScores}
+            reviewerReports={reviewerReports}
             onScoreChange={handleScoreChange}
             onCommentChange={handleCommentChange}
           />
@@ -299,26 +347,26 @@ export function FinalReportForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="positives" className="text-green-700 dark:text-green-400">
+            <Label htmlFor="positivePoints" className="text-green-700 dark:text-green-400">
               Points positifs
             </Label>
             <Textarea
-              id="positives"
+              id="positivePoints"
               placeholder="- Point positif 1&#10;- Point positif 2"
-              value={positives}
-              onChange={(e) => setPositives(e.target.value)}
+              value={positivePoints}
+              onChange={(e) => setPositivePoints(e.target.value)}
               rows={4}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="negatives" className="text-red-700 dark:text-red-400">
+            <Label htmlFor="negativePoints" className="text-red-700 dark:text-red-400">
               Points négatifs
             </Label>
             <Textarea
-              id="negatives"
+              id="negativePoints"
               placeholder="- Point négatif 1&#10;- Point négatif 2"
-              value={negatives}
-              onChange={(e) => setNegatives(e.target.value)}
+              value={negativePoints}
+              onChange={(e) => setNegativePoints(e.target.value)}
               rows={4}
             />
           </div>

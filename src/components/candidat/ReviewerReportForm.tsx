@@ -320,11 +320,11 @@ export function ReviewerReportForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="positives" className="text-green-700 dark:text-green-400">
+            <Label htmlFor="positivePoints" className="text-green-700 dark:text-green-400">
               Points positifs
             </Label>
             <Textarea
-              id="positives"
+              id="positivePoints"
               placeholder="- Point positif 1&#10;- Point positif 2"
               value={positivePoints}
               onChange={(e) => setPositivePoints(e.target.value)}
@@ -332,11 +332,11 @@ export function ReviewerReportForm({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="negatives" className="text-red-700 dark:text-red-400">
+            <Label htmlFor="negativePoints" className="text-red-700 dark:text-red-400">
               Points négatifs
             </Label>
             <Textarea
-              id="negatives"
+              id="negativePoints"
               placeholder="- Point négatif 1&#10;- Point négatif 2"
               value={negativePoints}
               onChange={(e) => setNegativePoints(e.target.value)}

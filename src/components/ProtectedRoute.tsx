@@ -7,11 +7,11 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
-import type { UserRole } from '@/lib/types';
+import type { RoleEnum } from '@/lib/types';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: UserRole;
+  requiredRole?: RoleEnum;
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
@@ -36,9 +36,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   // Check role if required
   if (requiredRole) {
-    const userRole = user.role || user.roles?.[0];
+    const userRoles = user.roles?.map(ur => ur.role?.name) || [];
+    const hasRequiredRole = userRoles.includes(requiredRole);
 
-    if (userRole !== requiredRole) {
+    if (!hasRequiredRole) {
       return (
         <div className="flex min-h-screen items-center justify-center p-8">
           <div className="text-center space-y-4 max-w-md">
@@ -50,7 +51,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
             <p className="text-sm text-muted-foreground">
               Rôle requis: <span className="font-semibold">{requiredRole}</span>
               <br />
-              Votre rôle: <span className="font-semibold">{userRole || 'Aucun'}</span>
+              Vos rôles: <span className="font-semibold">{userRoles.join(', ') || 'Aucun'}</span>
             </p>
           </div>
         </div>
